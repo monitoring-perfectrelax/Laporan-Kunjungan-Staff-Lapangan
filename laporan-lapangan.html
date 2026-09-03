@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Laporan Harian Lapangan</title>
+<style>
+  :root{
+    --paper:#F6F4EF;
+    --ink:#22261F;
+    --ink-soft:#5B5F55;
+    --line:#D8D4C6;
+    --amber:#C9781E;
+    --amber-deep:#9E5A12;
+    --ok:#3D7A4A;
+    --ok-bg:#E9F1EA;
+    --warn-bg:#FBF0E0;
+    --card:#FFFFFF;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.45;
+    padding-bottom:96px;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+
+  header.app{
+    background:var(--ink);
+    color:var(--paper);
+    padding:22px 16px 20px;
+    border-bottom:4px solid var(--amber);
+  }
+  header.app h1{margin:0;font-size:1.28rem;font-weight:700;letter-spacing:0.01em;}
+  header.app p{margin:4px 0 0;color:#C9CBC0;font-size:0.88rem;}
+  header.app a.dash-link{
+    color:#E9E5D6;font-size:0.8rem;text-decoration:underline;display:inline-block;margin-top:8px;
+  }
+
+  .section{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 16px;
+    margin-top:16px;
+  }
+  .section h2{font-size:1.02rem;margin:0 0 4px;display:flex;align-items:baseline;gap:8px;}
+  .section h2 .num{color:var(--amber-deep);font-variant-numeric:tabular-nums;font-weight:700;}
+  .section .hint{color:var(--ink-soft);font-size:0.85rem;margin:0 0 14px;}
+
+  label.field{display:block;margin-top:14px;}
+  label.field:first-of-type{margin-top:0;}
+  label.field .lbl{display:block;font-size:0.9rem;font-weight:600;margin-bottom:6px;}
+  label.field .lbl .req{color:var(--amber-deep);}
+
+  input[type=text], input[type=date], textarea{
+    width:100%;border:1px solid var(--line);border-radius:8px;
+    padding:11px 12px;font-size:1rem;font-family:inherit;color:var(--ink);background:#FBFAF7;
+  }
+  input[type=text]:focus, input[type=date]:focus, textarea:focus{
+    outline:2px solid var(--amber);outline-offset:1px;background:#fff;
+  }
+  textarea{resize:vertical;min-height:76px;}
+
+  /* Outlet search combobox */
+  .combo{position:relative;}
+  .combo input.valid{border-color:var(--ok);background:#F5FAF6;}
+  .combo-drop{
+    position:absolute;left:0;right:0;top:calc(100% + 4px);
+    background:#fff;border:1px solid var(--line);border-radius:8px;
+    max-height:260px;overflow-y:auto;z-index:20;
+    box-shadow:0 8px 18px rgba(0,0,0,0.12);display:none;
+  }
+  .combo-drop.open{display:block;}
+  .combo-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #F0EDE3;}
+  .combo-item:last-child{border-bottom:none;}
+  .combo-item:hover, .combo-item.hi{background:var(--warn-bg);}
+  .combo-item .oname{font-size:0.92rem;font-weight:600;}
+  .combo-item .ometa{font-size:0.76rem;color:var(--ink-soft);margin-top:1px;}
+  .combo-empty{padding:12px;font-size:0.85rem;color:var(--ink-soft);}
+  .combo-selected-tag{
+    display:none;align-items:center;gap:6px;margin-top:8px;font-size:0.82rem;color:var(--ok);font-weight:600;
+  }
+  .combo-selected-tag.show{display:flex;}
+
+  .checklist{display:flex;flex-direction:column;gap:2px;}
+  .check-row{display:flex;align-items:flex-start;gap:11px;padding:11px 4px;border-bottom:1px solid #EEEBE2;cursor:pointer;}
+  .check-row:last-child{border-bottom:none;}
+  .check-row input[type=checkbox]{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--amber-deep);}
+  .check-row span{font-size:0.96rem;}
+
+  .radio-group{display:flex;flex-direction:column;gap:2px;}
+  .radio-row{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid #EEEBE2;cursor:pointer;}
+  .radio-row:last-child{border-bottom:none;}
+  .radio-row input[type=radio]{width:19px;height:19px;accent-color:var(--amber-deep);}
+
+  .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;}
+  .photo-slot{
+    border:1.5px dashed var(--line);border-radius:8px;background:#FBFAF7;
+    aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;position:relative;overflow:hidden;cursor:pointer;
+  }
+  .photo-slot.filled{border-style:solid;border-color:var(--ok);}
+  .photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .photo-slot .cam-icon{font-size:1.7rem;color:var(--ink-soft);}
+  .photo-slot .cam-label{font-size:0.8rem;font-weight:600;color:var(--ink-soft);padding:0 8px;margin-top:4px;}
+  .photo-slot .badge-ok{position:absolute;top:6px;right:6px;background:var(--ok);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .photo-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+  .submit-bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));}
+  .submit-bar .wrap{padding:0;}
+  button.primary{width:100%;background:var(--amber-deep);color:#fff;border:none;border-radius:9px;padding:14px;font-size:1.02rem;font-weight:700;cursor:pointer;}
+  button.primary:active{background:#7E4A0E;}
+  button.primary:disabled{background:#B8B2A2;cursor:not-allowed;}
+
+  .error-line{color:#A13A2A;font-size:0.83rem;margin-top:8px;display:none;}
+  .error-line.show{display:block;}
+
+  .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;padding:10px 18px;border-radius:8px;font-size:0.9rem;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,0.18);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;}
+  .toast.show{opacity:1;}
+
+  .done-screen{text-align:center;padding:40px 16px;}
+  .done-screen .check{width:58px;height:58px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 16px;}
+  .done-screen h2{margin:0 0 6px;font-size:1.15rem;}
+  .done-screen p{color:var(--ink-soft);margin:0 0 22px;font-size:0.92rem;}
+  button.secondary{background:none;border:1.5px solid var(--ink);color:var(--ink);border-radius:9px;padding:11px 20px;font-size:0.95rem;font-weight:600;cursor:pointer;}
+
+  .history-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .history-toggle .arrow{transition:transform .15s;color:var(--ink-soft);}
+  .history-toggle.open .arrow{transform:rotate(180deg);}
+  .history-list{margin-top:10px;display:none;}
+  .history-list.open{display:block;}
+  .hist-item{border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin-bottom:8px;cursor:pointer;background:#FBFAF7;}
+  .hist-item .row1{display:flex;justify-content:space-between;font-size:0.92rem;font-weight:600;}
+  .hist-item .row2{font-size:0.8rem;color:var(--ink-soft);margin-top:2px;}
+  .hist-empty{color:var(--ink-soft);font-size:0.88rem;padding:6px 2px;}
+  .hist-detail{display:none;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;}
+  .hist-detail.open{display:block;}
+  .hist-detail .photo-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .hist-detail .photo-mini-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
+  .hist-detail .krow{font-size:0.87rem;margin-top:6px;}
+  .hist-detail .krow b{display:block;font-weight:600;margin-bottom:2px;}
+  .pill{display:inline-block;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:20px;margin-top:4px;}
+  .pill.selesai{background:var(--ok-bg);color:var(--ok);}
+  .pill.tindak{background:var(--warn-bg);color:var(--amber-deep);}
+</style>
+</head>
+<body>
+
+<header class="app">
+  <div class="wrap">
+    <h1>Laporan Harian Lapangan</h1>
+    <p>Diisi oleh PIC / staff lapangan setiap hari</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <form id="reportForm">
+
+    <div class="section">
+      <h2><span class="num">1</span> Info Petugas</h2>
+      <label class="field">
+        <span class="lbl">Nama <span class="req">*</span></span>
+        <input type="text" id="nama" required placeholder="Nama lengkap">
+      </label>
+
+      <label class="field">
+        <span class="lbl">Lokasi Outlet <span class="req">*</span></span>
+        <div class="combo">
+          <input type="text" id="lokasiSearch" placeholder="Ketik nama outlet untuk mencari..." autocomplete="off" required>
+          <div class="combo-drop" id="lokasiDrop"></div>
+          <div class="combo-selected-tag" id="lokasiTag">✓ <span id="lokasiTagText"></span></div>
+        </div>
+        <div class="error-line" id="err-lokasi">Pilih outlet dari daftar pencarian di atas.</div>
+      </label>
+
+      <label class="field">
+        <span class="lbl">Tanggal <span class="req">*</span></span>
+        <input type="date" id="tanggal" required>
+      </label>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">2</span> Laporan Pelaksanaan Tugas <span class="req">*</span></h2>
+      <p class="hint">Centang kegiatan yang sudah dilakukan hari ini</p>
+      <div class="checklist" id="checklist"></div>
+      <div class="error-line" id="err-checklist">Pilih minimal satu kegiatan yang sudah dilakukan.</div>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">3</span> Kendala dan Temuan di Lokasi</h2>
+      <p class="hint">Wajib diisi walau tidak ada kendala — tulis "Tidak ada kendala" bila lokasi aman.</p>
+      <label class="field">
+        <span class="lbl">Kendala / Permasalahan yang ditemukan <span class="req">*</span></span>
+        <textarea id="kendala" required placeholder="Contoh: Kursi nomor 12 rusak pada penyangga kaki"></textarea>
+      </label>
+      <label class="field">
+        <span class="lbl">Solusi yang dilakukan <span class="req">*</span></span>
+        <textarea id="solusi" required placeholder="Contoh: Sudah diperbaiki sementara, menunggu sparepart"></textarea>
+      </label>
+      <label class="field"><span class="lbl">Progres Permasalahan <span class="req">*</span></span></label>
+      <div class="radio-group" id="progresGroup">
+        <label class="radio-row"><input type="radio" name="progres" value="Masalah Selesai"><span>Masalah Selesai</span></label>
+        <label class="radio-row"><input type="radio" name="progres" value="Tindak Lanjut / Request Item"><span>Tindak Lanjut / Request Item</span></label>
+      </div>
+      <div class="error-line" id="err-progres">Pilih salah satu status progres.</div>
+    </div>
+
+    <div class="section">
+      <h2><span class="num">4</span> Dokumentasi Foto <span class="req">*</span></h2>
+      <p class="hint">Foto langsung diambil dari kamera saat itu juga, bukan dari galeri.</p>
+      <div class="photo-grid">
+        <div class="photo-slot" data-key="depan">
+          <span class="cam-icon">📷</span><span class="cam-label">Kursi tampak depan</span>
+          <input type="file" accept="image/*" capture="environment" data-key="depan">
+        </div>
+        <div class="photo-slot" data-key="samping">
+          <span class="cam-icon">📷</span><span class="cam-label">Kursi tampak samping</span>
+          <input type="file" accept="image/*" capture="environment" data-key="samping">
+        </div>
+        <div class="photo-slot" data-key="belakang">
+          <span class="cam-icon">📷</span><span class="cam-label">Kursi tampak belakang</span>
+          <input type="file" accept="image/*" capture="environment" data-key="belakang">
+        </div>
+        <div class="photo-slot" data-key="money">
+          <span class="cam-icon">📷</span><span class="cam-label">Foto money (coin slot)</span>
+          <input type="file" accept="image/*" capture="environment" data-key="money">
+        </div>
+        <div class="photo-slot" data-key="timer">
+          <span class="cam-icon">📷</span><span class="cam-label">Foto timer kursi</span>
+          <input type="file" accept="image/*" capture="environment" data-key="timer">
+        </div>
+      </div>
+      <div class="error-line" id="err-photo">Semua 5 foto wajib diambil sebelum mengirim.</div>
+    </div>
+
+  </form>
+
+  <div class="section done-screen" id="doneScreen" style="display:none;">
+    <div class="check">✓</div>
+    <h2>Laporan terkirim</h2>
+    <p>Terima kasih, laporan hari ini sudah tersimpan.</p>
+    <button class="secondary" id="btnNewReport" type="button">Isi laporan baru</button>
+  </div>
+
+  <div class="section" id="historySection">
+    <div class="history-toggle" id="historyToggle">
+      <h2 style="margin:0;"><span class="num">↺</span> Riwayat Laporan</h2>
+      <span class="arrow">▾</span>
+    </div>
+    <p class="hint" style="margin-top:8px;">Laporan yang sudah dikirim, bisa dilihat semua staff.</p>
+    <div class="history-list" id="historyList">
+      <div class="hist-empty">Memuat riwayat…</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="submit-bar">
+  <div class="wrap">
+    <button class="primary" id="submitBtn" type="submit" form="reportForm">Kirim Laporan</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Tersimpan</div>
+
+<script>
+const OUTLETS = [{"k": "A001", "l": "Ancol Dufan Ice Age Indoor Playgound", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "D003", "l": "Bandara Sultan Syarif Kasim II Pekanbaru  Lantai 1", "a": "Riau", "c": "Airport"}, {"k": "D015", "l": "Bandara Ahmad Yani Semarang Lt. 1 (Kedatangan)", "a": "Jawa Tengah", "c": "Airport"}, {"k": "K006", "l": "Stasiun Semarang Tawang", "a": "Jawa Tengah", "c": "Train Station"}, {"k": "M039", "l": "23 Paskal Shopping Center Bandung", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M049", "l": "Green Pramuka Square Mall Lt. UG (Depan Playless)", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M094", "l": "Lagoon Avenue Mall Sungkono", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M023", "l": "WTC Batanghari Jambi", "a": "Jambi", "c": "Shopping Mall"}, {"k": "M070", "l": "Transmart Jambi ( Depan Kincir )", "a": "Jambi", "c": "Shopping Mall"}, {"k": "M037", "l": "Mall Pekanbaru Lt Dasar", "a": "Riau", "c": "Shopping Mall"}, {"k": "H009", "l": "Alfa Resort Hotel & Conference Puncak Bogor", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M026", "l": "Lippo Plaza Jambi Lt. LG", "a": "Jambi", "c": "Shopping Mall"}, {"k": "A039", "l": "Ancol Ocean Dream Samudra Lokasi Under Water", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "M064", "l": "Living Word Pekanbaru Lt. 2-05", "a": "Riau", "c": "Shopping Mall"}, {"k": "D005", "l": "Bandara Kualanamu Medan Lt.1", "a": "Sumatera Utara", "c": "Airport"}, {"k": "D019", "l": "Bandara Radin Inten II International Lampung Gate 1", "a": "Lampung", "c": "Airport"}, {"k": "D007", "l": "Bandara Sultan Mahmud Badaruddin II Palembang Gate 2", "a": "Sumatera Selatan", "c": "Airport"}, {"k": "A022", "l": "Ancol Sea World Area Museum", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "D006", "l": "Bandara Minangkabau Padang", "a": "Sumatera Barat", "c": "Airport"}, {"k": "D009", "l": "Bandara Adi Soemarmo Solo Lantai 3", "a": "Jawa Tengah", "c": "Airport"}, {"k": "K002", "l": "Stasiun Gubeng Surabaya", "a": "Jawa Timur", "c": "Train Station"}, {"k": "K003", "l": "Stasiun Pasar Turi", "a": "Jawa Timur", "c": "Train Station"}, {"k": "M091", "l": "Gajah Mada Plaza Jakarta  Lt. LG", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M054", "l": "Java Mall Semarang Lt. 1 ", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "A002", "l": "Dago Dreampark Lokasi Area Pinehouse", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M155", "l": "Phinisi Point Mall Makassar", "a": "Sulawesi Selatan", "c": "Shopping Mall"}, {"k": "K004", "l": "Stasiun Malang Kotabaru Lantai 1", "a": "Jawa Timur", "c": "Train Station"}, {"k": "M118", "l": "E Walk Balikpapan LG Barat", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "M150", "l": "Jatinangor Town Square Lt FF", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A040", "l": "Museum Listrik Dan Energi Baru TMII", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "A038", "l": "Taman Mas Kemambang Lokasi Depan Loket 2", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "K007", "l": "Stasiun Purwokerto", "a": "Jawa Tengah", "c": "Train Station"}, {"k": "K009", "l": "Stasiun Kejaksan Cirebon", "a": "Jawa Barat", "c": "Train Station"}, {"k": "M071", "l": "Transmart Palembang", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M069", "l": "Transmart Padang", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "M158", "l": "Kaza City Mall Surabaya Lt.2", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M168", "l": "Grage City Mall Cirebon", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M117", "l": "Pentacity Mall Balikpapan FF", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "M035", "l": "Lippo Plaza Jogja Lantai GF", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M095", "l": "Lippo Plaza Sidoarjo", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M083", "l": "Lippo Plaza Batu Malang Lt. RF", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "A023", "l": "Jatim Park 3 - Milenial Glow Garden", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "A025", "l": "Rasamadu Heritage", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "H013", "l": "Surabaya Suites Hotel Area Lobby", "a": "Jawa Timur", "c": "Hotel"}, {"k": "H014", "l": "The Alana Solo", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "A029", "l": "Kidzania Surabaya", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "A048", "l": "Eco Green Park", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "T001", "l": "Platinum Cinema Magelang", "a": "Jawa Tengah", "c": "Bioskop"}, {"k": "M178", "l": "Pasar Baru Trade Center Bandung", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M160", "l": "Metropolitan Mall Bekasi", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M179", "l": "Mall Pesona Square Depok", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M191", "l": "Supermall Karawaci", "a": "Banten", "c": "Shopping Mall"}, {"k": "M183", "l": "Mega Bekasi Hypermall Lt 3", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M016", "l": "Mall Kuningan City Lt. 2", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "K005", "l": "Stasiun Cirebon Prujakan", "a": "Jawa Barat", "c": "Train Station"}, {"k": "K010", "l": "Stasiun Bandung Ruang Tunggu Utara Lama", "a": "Jawa Barat", "c": "Train Station"}, {"k": "M020", "l": "Cirebon Super Block Mall LG-04", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M173", "l": "Depok Town Center", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M188", "l": "Gajah Mada Plaza Malang", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M200", "l": "The Grand Outlet ", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M192", "l": "Suite Life Sedayu City", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "C001", "l": "RS Bhakti Timah Pangkalpinang Lt. 1", "a": "Kepulauan Bangka Belitung", "c": "Hospital"}, {"k": "M102", "l": "Basko Grand Mall Lantai GF", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "H018", "l": "Lorin Syariah Solo Hotel", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "H019", "l": "Dwangsa Lorin", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "M036", "l": "Plaza Bintaro Jaya Banten Lt.3", "a": "Banten", "c": "Shopping Mall"}, {"k": "A046", "l": "Batu Love Garden", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "M043", "l": "Plaza Kalibata Jakarta Lantai FF", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M010", "l": "Eka Lokasari Bogor Lantai UG", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M010A", "l": "Eka Lokasari Bogor Lantai 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M010B", "l": "Eka Lokasari Bogor Lantai 3", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M001", "l": "One Bell Park", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M156", "l": "Plaza Pondok Gede Bekasi", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A027", "l": "Nicoles River Park", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M060", "l": "Vivo Mall Sentul", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "R001", "l": "Rest Area Km97 Cipularang Lorong Samping ", "a": "Jawa Barat", "c": "Rest Area"}, {"k": "M187", "l": "Mall Olympic Garden Malang Lt. Basement", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "J002", "l": "Masjid Istiqlal Lokasi Al Quddus", "a": "DKI Jakarta", "c": "Masjid"}, {"k": "A031", "l": "Taman Safari Indonesia", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M082", "l": "Mall Sosoro Lt. GF", "a": "Banten", "c": "Shopping Mall"}, {"k": "M092", "l": "City Mall Cilegon", "a": "Banten", "c": "Shopping Mall"}, {"k": "M093", "l": "Bakauheni Shopping Mall Lt. GF", "a": "Lampung", "c": "Shopping Mall"}, {"k": "M007", "l": "Teras Kota Lantai 2", "a": "Banten", "c": "Shopping Mall"}, {"k": "M201", "l": "The Central Mall Gunawangsa Tidar", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M213", "l": "CitiMall Cianjur 1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M214", "l": "CitiMall Cianjur 2 Lt. G", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M119", "l": "Malang Town Square Lt. UG", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M199", "l": "Tentrem Mall Semarang", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "M035A", "l": "Lippo Plaza Jogja Lantai 1", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "A050", "l": "Beefun Playland Surabaya", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "P004", "l": "Yogya Sumbersari Junction", "a": "Jawa Barat", "c": "Super Market"}, {"k": "K013", "l": "Stasiun Tugu Yogyakarta", "a": "DI Yogyakarta", "c": "Train Station"}, {"k": "B002", "l": "Terminal Tingkir Salatiga ", "a": "Jawa Tengah", "c": "Bus Station"}, {"k": "M037C", "l": "Mall Pekanbaru Lt 3", "a": "Riau", "c": "Shopping Mall"}, {"k": "C011", "l": "RS MRCCC Siloam Semanggi", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "F003", "l": "BTPN Mega Kuningan Lt. 27", "a": "DKI Jakarta", "c": "Office Tower/Pelabuhan"}, {"k": "M037B", "l": "Mall Pekanbaru Lt 1", "a": "Riau", "c": "Shopping Mall"}, {"k": "H015", "l": "Aston Solo Hotel", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "M004", "l": "Bassura Mall LG & L2", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M031", "l": "The King Shopping Center  Lt. LG Depan DIY", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M133", "l": "Sukaramai Trade Center  Baru Lobby Cokro", "a": "Riau", "c": "Shopping Mall"}, {"k": "M032", "l": "Sleman City Hall  Lt.1", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "A020", "l": "Asstro Highland Ciater", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "D020", "l": "Bandara Pattimura Ambon", "a": "Maluku", "c": "Airport"}, {"k": "M212", "l": "STS Sadang Purwakarta", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A036", "l": "Lokawisata Baturaden", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "M207", "l": "Icon Walk Banten", "a": "Banten", "c": "Shopping Mall"}, {"k": "M210", "l": "Transmart Graha Raya", "a": "Banten", "c": "Shopping Mall"}, {"k": "A023A", "l": "Jatim Park 3 - Depan Brasco", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "C023", "l": "RSUD Khidmat Sehat Afiat KISA Depok Lt. 1", "a": "Jawa Barat", "c": "Hospital"}, {"k": "A009", "l": "Heha Sky View Yogyakarta", "a": "DI Yogyakarta", "c": "Tourist Attactions"}, {"k": "C019", "l": "RSUD Dr Adjidarmo Rangkasbitung Gedung C Lt. 1", "a": "Banten", "c": "Hospital"}, {"k": "A037", "l": "Menara Pandang Teratai Purwokerto", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "M189", "l": "Pacific Garden Square", "a": "Banten", "c": "Shopping Mall"}, {"k": "A028", "l": "Taman Bunga Celosia - Foodcourt Atas", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "A028A", "l": "Taman Bunga Celosia - Exit", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "A028B", "l": "Taman Bunga Celosia - Lorong", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "K001", "l": "Stasiun Balapan Solo", "a": "Jawa Tengah", "c": "Train Station"}, {"k": "M193", "l": "Karawang Central Plaza Fun World", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "G009", "l": "Point Coffee Gedhe Rest Area Km 43 Merak", "a": "Banten", "c": "Restaurant/Cafe"}, {"k": "G008", "l": "Point Coffee Gedhe Ambon", "a": "Maluku", "c": "Restaurant/Cafe"}, {"k": "M011", "l": "Pamulang Square", "a": "Banten", "c": "Shopping Mall"}, {"k": "F005", "l": "Pelabuhan Ulee Lheue Aceh", "a": "Aceh", "c": "Office Tower/Pelabuhan"}, {"k": "M120", "l": "BSD Plaza Lt. LG", "a": "Banten", "c": "Shopping Mall"}, {"k": "M121", "l": "Duta Mall Banjarmasin LD-07", "a": "Kalimantan Selatan", "c": "Shopping Mall"}, {"k": "D009A", "l": "Bandara Adi Soemarmo Solo Lantai 1", "a": "Jawa Tengah", "c": "Airport"}, {"k": "M127", "l": "Tangcity Mall Lantai GF", "a": "Banten", "c": "Shopping Mall"}, {"k": "A041", "l": "Saloka Theme Park Lokasi Stasiun", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "M135", "l": "Ambon City Center Lt. HDB", "a": "Maluku", "c": "Shopping Mall"}, {"k": "M177", "l": "CBD Ciledug Family Mall", "a": "Banten", "c": "Shopping Mall"}, {"k": "M184", "l": "Mall Paradise Walk Serpong Area Jembatan UG", "a": "Banten", "c": "Shopping Mall"}, {"k": "M141", "l": "Suncity Mall Plaza Madiun", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M033", "l": "Baywalk Mall Pluit Lt. LG", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "G007", "l": "Point Coffee Hos Cokro 33 Bali Stand Alone", "a": "Bali", "c": "Restaurant/Cafe"}, {"k": "K008", "l": "Stasiun Lempuyangan Yogyakarta", "a": "DI Yogyakarta", "c": "Train Station"}, {"k": "M014", "l": "Suncity Mall Sidoarjo", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M018", "l": "Living World Denpasar", "a": "Bali", "c": "Shopping Mall"}, {"k": "M181", "l": "Cinere Bellevue Mall", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M238", "l": "Linggajati Plaza", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M049A", "l": "Green Pramuka Square Mall Lt. LG (Depan DIY)", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "H025", "l": "Apartemen Serpong Green View", "a": "Banten", "c": "Hotel"}, {"k": "M224", "l": "Blitar Square", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "H026", "l": "Atria Hotel Gading Serpong Area Lobby Hotel", "a": "Banten", "c": "Hotel"}, {"k": "M222", "l": "Trans Studio Mall Bali", "a": "Bali", "c": "Shopping Mall"}, {"k": "M198", "l": "Lippo Plaza Kupang Lt. GF", "a": "Nusa Tenggara Timur", "c": "Shopping Mall"}, {"k": "M180", "l": "Ambon Manise Square", "a": "Maluku", "c": "Shopping Mall"}, {"k": "M176", "l": "ITC Mega Grosir Surabaya", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M175", "l": "Malang City Point", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M112", "l": "Ramayana Karawang", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A007", "l": "Go! Wet Waterpark Grand Wisata", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "K011", "l": "Stasiun Cisauk", "a": "Banten", "c": "Train Station"}, {"k": "U001", "l": "Binus Square Hall", "a": "DKI Jakarta", "c": "University"}, {"k": "M024", "l": "Mall Balekota Tangerang Area Atrium Oetama", "a": "Banten", "c": "Shopping Mall"}, {"k": "M012", "l": "The Plaza Millenium Medan Lt 5", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M157", "l": "Royal Plaza Surabaya UG", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M116", "l": "Lippo Plaza Aceh Lt. LG", "a": "Aceh", "c": "Shopping Mall"}, {"k": "M078", "l": "Beachwalk Shopping Center Bali", "a": "Bali", "c": "Shopping Mall"}, {"k": "M174", "l": "Matahari Duta Plaza Denpasar", "a": "Bali", "c": "Shopping Mall"}, {"k": "M051", "l": "Plaza Renon Bali", "a": "Bali", "c": "Shopping Mall"}, {"k": "H011", "l": "Lorin Sentul Hotel", "a": "Jawa Barat", "c": "Hotel"}, {"k": "H016", "l": "Royal Safari Garden Area Lobby", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M208", "l": "Darmo Trade Center Surabaya", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M163B", "l": "MTC Mall Panam Pekanbaru Riau Dasar Selatan", "a": "Riau", "c": "Shopping Mall"}, {"k": "J001", "l": "Masjid Attawun Lokasi Laki-Laki", "a": "Jawa Barat", "c": "Masjid"}, {"k": "J001A", "l": "Masjid AttaAwun Lokasi Perempuan", "a": "Jawa Barat", "c": "Masjid"}, {"k": "M027", "l": "Mall Boxies 123 Lt.1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M113", "l": "Pluit Village", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "J002A", "l": "Masjid Istiqlal Lokasi Al Fattah", "a": "DKI Jakarta", "c": "Masjid"}, {"k": "M264", "l": "Lippo Plaza Keboen Raya Bogor", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M086", "l": "Plaza Malioboro Yogya Lantai 3", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M086A", "l": "Plaza Malioboro Yogya Lantai LG", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M172", "l": "Cibinong Mall", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M147", "l": "Citra Xperience Kemayoran", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M050", "l": "Green Walk Mall Lt. GF", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A044", "l": "Cluring Waterpark", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "M109", "l": "Plaza Indah Bogor", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "R004", "l": "Rest Area KM88 A", "a": "Jawa Barat", "c": "Rest Area"}, {"k": "R004A", "l": "Rest Area KM88 B", "a": "Jawa Barat", "c": "Rest Area"}, {"k": "A045", "l": "The Bagong Adventure Museum Tubuh", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "M006", "l": "Tomang Tol Plaza", "a": "Banten", "c": "Shopping Mall"}, {"k": "M158A", "l": "Kaza City Mall Surabaya Lt.3", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M075", "l": "Nipah Mall Makassar", "a": "Sulawesi Selatan", "c": "Shopping Mall"}, {"k": "M132", "l": "Mall Cinere", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M074", "l": "Mall Ratu Indah Makassar", "a": "Sulawesi Selatan", "c": "Shopping Mall"}, {"k": "C010", "l": "RS Siloam Lippo Village Ruang Internist", "a": "Banten", "c": "Hospital"}, {"k": "M040", "l": "OPI Mall Palembang Lt.1", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "A051", "l": "Beefun Playland Sidoarjo ", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "M040A", "l": "OPI Mall Palembang Lt.2", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M052", "l": "Mall Alam Sutera Lantai 1", "a": "Banten", "c": "Shopping Mall"}, {"k": "M052A", "l": "Mall Alam Sutera Lantai 2", "a": "Banten", "c": "Shopping Mall"}, {"k": "H024", "l": "Aston Kemayoran City Hotel", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "F001", "l": "Pelabuhan ASDP Merak", "a": "Banten", "c": "Office Tower/Pelabuhan"}, {"k": "H005", "l": "Starlet Hotel BSD City Tanggerang", "a": "Banten", "c": "Hotel"}, {"k": "A052", "l": "Museum Angkut Malang", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "M028", "l": "Carstensz Mall", "a": "Banten", "c": "Shopping Mall"}, {"k": "M073", "l": "Resinda Park Mall Karawang Lt. 1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "C015", "l": "RS DR Bratanata Jambi", "a": "Jambi", "c": "Hospital"}, {"k": "A033", "l": "Hillpark Sibolangit Foodcourt", "a": "Sumatera Utara", "c": "Tourist Attactions"}, {"k": "C004", "l": "RS Islam Sultan Agung Banjarbaru Klinik Urologi", "a": "Kalimantan Selatan", "c": "Hospital"}, {"k": "A033A", "l": "Hillpark Sibolangit Lobby", "a": "Sumatera Utara", "c": "Tourist Attactions"}, {"k": "C005", "l": "RS Indriati Solo Baru", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C008", "l": "RSUD Cempaka Lima Aceh", "a": "Aceh", "c": "Hospital"}, {"k": "R001A", "l": "Rest Area Km97 Cipularang Lobby Belakang", "a": "Jawa Barat", "c": "Rest Area"}, {"k": "A030", "l": "Brasco Factory Outlet", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M170", "l": "Mall Dinoyo City Malang Lobby", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M170A", "l": "Mall Dinoyo City Malang Lt.2", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M162", "l": "Kediri Town Square", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "H023", "l": "Hotel Aston Bogor Area Meeting Room", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M114", "l": "Cilegon Center Mall Lantai LG", "a": "Banten", "c": "Shopping Mall"}, {"k": "M154", "l": "Matahari Department Store Aceh", "a": "Aceh", "c": "Shopping Mall"}, {"k": "M129", "l": "Ramayana Plaza Andalas Padang Lt. GF", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "M149", "l": "Ramayana Kupang", "a": "Nusa Tenggara Timur", "c": "Shopping Mall"}, {"k": "C009", "l": "Klinik Cempaka Lima Aceh", "a": "Aceh", "c": "Hospital"}, {"k": "C013", "l": "RSIA Cempaka Azzahra Aceh ", "a": "Aceh", "c": "Hospital"}, {"k": "C021", "l": "RS Ananda Purwokerto", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C027", "l": "RS Universitas Sebelas Maret", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "F008", "l": "Pelabuhan PadangBai Bali Depan Loket", "a": "Bali", "c": "Office Tower/Pelabuhan"}, {"k": "A018", "l": "Heha Ocean View Yogyakarta", "a": "DI Yogyakarta", "c": "Tourist Attactions"}, {"k": "L004", "l": "Jagorawi Golf & Country Club Ruang Salin Laki-Laki", "a": "Jawa Barat", "c": "Sport"}, {"k": "F010", "l": "ASDP Ketapang", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "A013", "l": "Candi Prambanan - Pintu Keluar Objek Wisata", "a": "DI Yogyakarta", "c": "Tourist Attactions"}, {"k": "D021", "l": "Bandara Sultan Aji Muhammad Sulaiman Sepinggan Balikpapan", "a": "Kalimantan Timur", "c": "Airport"}, {"k": "A013A", "l": "Candi Prambanan - Pintu Keluar Candi", "a": "DI Yogyakarta", "c": "Tourist Attactions"}, {"k": "C014", "l": "RS Indriati Boyolali Lt. 1", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "M063", "l": "Citimall Dumai Lantai Dasar", "a": "Riau", "c": "Shopping Mall"}, {"k": "D001", "l": "Bandara Aji Pangeran Tumenggung Pranoto Samarinda", "a": "Kalimantan Timur", "c": "Airport"}, {"k": "M063A", "l": "Citimall Dumai Lantai 2", "a": "Riau", "c": "Shopping Mall"}, {"k": "G016", "l": "Turbo Billiard And Cafe", "a": "Jawa Timur", "c": "Restaurant/Cafe"}, {"k": "D014", "l": "Bandara Kulon Progo Yogyakarta Domestik Area Check In", "a": "DI Yogyakarta", "c": "Airport"}, {"k": "H003", "l": "POP Hotel Diponegoro Surabaya", "a": "Jawa Timur", "c": "Hotel"}, {"k": "D014D", "l": "Bandara Kulon Progo Yogyakarta Internasional", "a": "DI Yogyakarta", "c": "Airport"}, {"k": "H006", "l": "The Alana Hotel Malang", "a": "Jawa Timur", "c": "Hotel"}, {"k": "M058", "l": "Miko Mall Bandung", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "H035", "l": "Intercontinental Bali Resort", "a": "Bali", "c": "Hotel"}, {"k": "M005", "l": "Mall Botania Batam Lt. UG", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "H037", "l": "Top Malioboro Hotel Jogya", "a": "DI Yogyakarta", "c": "Hotel"}, {"k": "M115", "l": "Nagoya Hill Mall Lantai LG (LGCN129)", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "D018", "l": "Bandara Ngurah Rai Bali Gate 3", "a": "Bali", "c": "Airport"}, {"k": "M115A", "l": "Nagoya Hill Mall Lantai 1 (FFCN025)", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "M115B", "l": "Nagoya Hill Mall Lantai 2 Depan Electronic City (SFCN015)", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "D023", "l": "Bandara Sultan Iskandar Muda Aceh", "a": "Aceh", "c": "Airport"}, {"k": "M122", "l": "Transmart Carrefour Maguwoharjo", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "D024", "l": "Bandara Internasional El Tari Kupang Gate 1", "a": "Nusa Tenggara Timur", "c": "Airport"}, {"k": "D024A", "l": "Bandara Internasional El Tari Kupang Gate 3", "a": "Nusa Tenggara Timur", "c": "Airport"}, {"k": "M185", "l": "One Batam Mall", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "M038", "l": "Mall Malioboro Yogyakarta", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M045", "l": "Mall Bali Galeria", "a": "Bali", "c": "Shopping Mall"}, {"k": "M003", "l": "Transmart Mataram Lombok", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "H012", "l": "Pop Hotel Sangaji Yogyakarta", "a": "DI Yogyakarta", "c": "Hotel"}, {"k": "M136", "l": "Plaza Madiun", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "C017", "l": "RS Islam Siti Hajar Poli Paru", "a": "Nusa Tenggara Barat", "c": "Hospital"}, {"k": "M136A", "l": "Plaza Madiun Lt.1 (Food Court)", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "H032", "l": "Inkoppabri Cisarua Resort", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M059", "l": "Plaza Surabaya", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "C025", "l": "RSUD Kota Mataram Ruang Nifas", "a": "Nusa Tenggara Barat", "c": "Hospital"}, {"k": "P009", "l": "Swalayan Maju Bersama Denai", "a": "Sumatera Utara", "c": "Super Market"}, {"k": "P010", "l": "Swalayan Maju Bersama Katamso", "a": "Sumatera Utara", "c": "Super Market"}, {"k": "H028", "l": "Bobopod Juanda", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "M187A", "l": "Mall Olympic Garden Malang Lt. 2", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "F007", "l": "PT ASDP Indonesia Ferry Lombok", "a": "Nusa Tenggara Barat", "c": "Office Tower/Pelabuhan"}, {"k": "H027", "l": "Bobobox Pods Pancoran", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "M076", "l": "Mataram Mall Lantai 1", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "M076A", "l": "Mataram Mall Lantai 2", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "M022", "l": "Jambi Town Square Lt Dasar", "a": "Jambi", "c": "Shopping Mall"}, {"k": "M083A", "l": "Lippo Plaza Batu Malang Lt. GF", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M022A", "l": "Jambi Town Square Lantai 2", "a": "Jambi", "c": "Shopping Mall"}, {"k": "H034", "l": "Bobopod Kota Tua", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "M171", "l": "Ring Road City Walks Mall Medan Lantai 1", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M101", "l": "Mega Mall Manado", "a": "Sulawesi Utara", "c": "Shopping Mall"}, {"k": "G012", "l": "Point Coffee Gedhe Manado", "a": "Sulawesi Utara", "c": "Restaurant/Cafe"}, {"k": "M087", "l": "Medan Mall", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M030", "l": "Jogya City Mall Lt.1", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M019", "l": "Istana Plaza Bandung Lantai LG", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M019A", "l": "Istana Plaza Bandung Lantai UG", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "C020", "l": "Klinik Utama Fakhira", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "M030A", "l": "Jogya City Mall  Lt.LG", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "P005", "l": "Yogya Ciranjang Cianjur", "a": "Jawa Barat", "c": "Super Market"}, {"k": "M053", "l": "Sun Plaza Medan Depan ATM", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M032A", "l": "Sleman City Hall Lt.2", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M223", "l": "Kebayoran Park Mall", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M097", "l": "Centre Point Medan  Lantai 3", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M041", "l": "Galeria Mall Yogya Lt UG", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "C026", "l": "RS Siloam Bogor", "a": "Jawa Barat", "c": "Hospital"}, {"k": "M041A", "l": "Galeria Mall Yogya Lt.2", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "L005", "l": "Suvarna Jakarta Golf Club", "a": "DKI Jakarta", "c": "Sport"}, {"k": "M097A", "l": "Centre Point Medan Lantai 3A", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M119A", "l": "Malang Town Square Lt. LG", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M134", "l": "Lawu Plaza Madiun Lt. 1 Lama", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M190", "l": "Lippo Plaza Lubuklinggau Lantai LG ", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M134A", "l": "Lawu Plaza Madiun Lt. 1 Baru", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M190A", "l": "Lippo Plaza Lubuklinggau UG", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M042", "l": "Grand City Mall Surabaya Lt. LG", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M161", "l": "Central Plaza Lampung", "a": "Lampung", "c": "Shopping Mall"}, {"k": "M042A", "l": "Grand City Mall Surabaya Lt. 2", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "H030", "l": "Bobopod Dago Bandung", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M042B", "l": "Grand City Mall Surabaya Lt. 4", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M088", "l": "Cambridge City Square Lantai 2  Depan Ice Skating ", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M098", "l": "City Of Tomorrow Mall Lt. UG", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M088A", "l": "Cambridge City Square Lantai 2 Cocoland ", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M098A", "l": "City Of Tomorrow Mall Lt. 1", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M067", "l": "Grage Mall Cirebon Lt.1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M130", "l": "Lippo Plaza Medan Lt.UG", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "D017", "l": "Bandara Juanda Surabaya  Central Lobby  Internasional", "a": "Jawa Timur", "c": "Airport"}, {"k": "M106", "l": "Manhattan Times Square Lantai UG", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "D017A", "l": "Bandara Juanda Surabaya Boarding Lounge  Internasional", "a": "Jawa Timur", "c": "Airport"}, {"k": "M106A", "l": "Manhattan Times Square Lantai 2", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M081", "l": "Transmart Lampung", "a": "Lampung", "c": "Shopping Mall"}, {"k": "M219", "l": "Manhattan Urban Market Medan", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "C007", "l": "RSAU Dr M Hasan Toto Bogor", "a": "Jawa Barat", "c": "Hospital"}, {"k": "D017D", "l": "Bandara Juanda Surabaya Gate 10", "a": "Jawa Timur", "c": "Airport"}, {"k": "M034", "l": "Palembang Square Lt. UG", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M077", "l": "Palembang Square Extension Lt.LG Depan Miniso", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M072", "l": "Palembang Indah Mall", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M068", "l": "Transmart Pangkal Pinang Depan Ice Cream Feel", "a": "Kepulauan Bangka Belitung", "c": "Shopping Mall"}, {"k": "M111", "l": "Palembang Trade Center Lantai UG", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M111A", "l": "Palembang Trade Center Lantai LG", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M111B", "l": "Palembang Trade Center Lantai M1", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "H038", "l": "Angkasa Garden Hotel Pekanbaru", "a": "Riau", "c": "Hotel"}, {"k": "M215", "l": "Pekanbaru Xchange Lt UG", "a": "Riau", "c": "Shopping Mall"}, {"k": "C018", "l": "RS Eria Pekanbaru", "a": "Riau", "c": "Hospital"}, {"k": "H008", "l": "Grand Jatra Hotel Pekanbaru Ballroom", "a": "Riau", "c": "Hotel"}, {"k": "H008A", "l": "Grand Jatra Hotel Pekanbaru Lobby", "a": "Riau", "c": "Hotel"}, {"k": "M164", "l": "Plaza The Central Pekanbaru Lt. Dasar", "a": "Riau", "c": "Shopping Mall"}, {"k": "C006", "l": "RS Aulia Pekanbaru", "a": "Riau", "c": "Hospital"}, {"k": "M065", "l": "Transmart Pekanbaru Wing Kanan", "a": "Riau", "c": "Shopping Mall"}, {"k": "M065A", "l": "Transmart Pekanbaru Wing Kiri", "a": "Riau", "c": "Shopping Mall"}, {"k": "D004", "l": "Bandara Supadio Pontianak Gate 3 Area Schedule Board", "a": "Kalimantan Barat", "c": "Airport"}, {"k": "G005", "l": "Berlin Pool And Bistro Pontianak Lt. 1", "a": "Kalimantan Barat", "c": "Restaurant/Cafe"}, {"k": "M216", "l": "DBotanica Bandung Mall", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "D002", "l": "Bandara Depati Amir Pangkal Pinang", "a": "Kepulauan Bangka Belitung", "c": "Airport"}, {"k": "D005A", "l": "Bandara Kualanamu Medan (Depan Money Changer)", "a": "Sumatera Utara", "c": "Airport"}, {"k": "D005B", "l": "Bandara Kualanamu Medan Gate 4", "a": "Sumatera Utara", "c": "Airport"}, {"k": "D005D", "l": "Bandara Kualanamu Medan Gate 8", "a": "Sumatera Utara", "c": "Airport"}, {"k": "D005E", "l": "Bandara Kualanamu Medan Gate 9", "a": "Sumatera Utara", "c": "Airport"}, {"k": "D003A", "l": "Bandara Sultan Syarif Kasim II Pekanbaru Lantai 2 ", "a": "Riau", "c": "Airport"}, {"k": "D003B", "l": "Bandara Sultan Syarif Kasim II Pekanbaru Lt. Dasar (Bank BRI)", "a": "Riau", "c": "Airport"}, {"k": "M236", "l": "Living World Alam Sutera", "a": "Banten", "c": "Shopping Mall"}, {"k": "D007A", "l": "Bandara Sultan Mahmud Badaruddin II Palembang Area Check In ", "a": "Sumatera Selatan", "c": "Airport"}, {"k": "D025", "l": "Bandara Fatmawati Soekarno Bengkulu", "a": "Bengkulu", "c": "Airport"}, {"k": "M061", "l": "Cihampelas Walk Bandung Lantai GF K22", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M194", "l": "Transmart Cipadung  Area Supermarket", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M182", "l": "Ujung Berung Town Square Lt 2 (Titik 1)", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "G019", "l": "Bandung Kunafee Pasteur", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "P001", "l": "Yogya Mekar Wangi", "a": "Jawa Barat", "c": "Super Market"}, {"k": "M056", "l": "Bandung Indah Plaza Lt 1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A006", "l": "Sariater Lobby Area", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M057", "l": "Istana BEC Bandung Lt. L3K-06", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "P002", "l": "Yogya Lembang", "a": "Jawa Barat", "c": "Super Market"}, {"k": "M221", "l": "CitiMall Garut Lt 1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "G013", "l": "Tahu Susu Lembang", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "M234", "l": "Ciplaz Garut", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A017", "l": "Floating Market Lembang", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "A012", "l": "Farm House Lembang", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "P003", "l": "Yogya Bojong Soang Bandung", "a": "Jawa Barat", "c": "Super Market"}, {"k": "D016", "l": "Bandara International Zainuddin Abdul Madjid Lombok Gate 2", "a": "Nusa Tenggara Barat", "c": "Airport"}, {"k": "D016A", "l": "Bandara International Zainuddin Abdul Madjid Lombok Gate 3", "a": "Nusa Tenggara Barat", "c": "Airport"}, {"k": "A011", "l": "The Great Asia Africa Bandung Lt.1", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "C016", "l": "RS Mayapada Tanggerang Gedung 2 Lt 1 Ruang Orthopedi", "a": "Banten", "c": "Hospital"}, {"k": "H007", "l": "Hotel Newton Bandung", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M144", "l": "Transmart Buah Batu Bandung", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "H001", "l": "Novena Hotel", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M240", "l": "The Grove Alam Sutera", "a": "Banten", "c": "Shopping Mall"}, {"k": "M233", "l": "Pacific Mall Tegal", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "M137", "l": "Rita Supermall Tegal Lt 1", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "D011", "l": "Bandara Sam Ratulangi Manado", "a": "Sulawesi Utara", "c": "Airport"}, {"k": "M048", "l": "Lombok Epicentrum Mall Lantai LG", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "R002", "l": "Rest Area 260B Brebes", "a": "Jawa Tengah", "c": "Rest Area"}, {"k": "M048A", "l": "Lombok Epicentrum Mall Lantai 1 A", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "M048B", "l": "Lombok Epicentrum Mall Lantai 1 B", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "P046", "l": "Toserba Yogya Tegal", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "D022", "l": "Bandara Hang Nadim Batam Gate A4", "a": "Kepulauan Riau", "c": "Airport"}, {"k": "D022A", "l": "Bandara Hang Nadim Batam Gate A5", "a": "Kepulauan Riau", "c": "Airport"}, {"k": "D022B", "l": "Bandara Hang Nadim Batam Gate A6", "a": "Kepulauan Riau", "c": "Airport"}, {"k": "H031", "l": "Bobobox Pods Paskal", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M008", "l": "The Park Mall Solo Lt. 1", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "H036", "l": "Ramada Suites Hotels Solo Area ", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "M008A", "l": "The Park Mall Solo Lt. LG", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "A016", "l": "Mikie Holiday DO", "a": "Sumatera Utara", "c": "Tourist Attactions"}, {"k": "A016A", "l": "Mikie Holiday Star Teather", "a": "Sumatera Utara", "c": "Tourist Attactions"}, {"k": "A016B", "l": "Mikie Holiday Hotel", "a": "Sumatera Utara", "c": "Tourist Attactions"}, {"k": "M197", "l": "Ramayana Samarinda Square", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "A021", "l": "DCastello Ciater Lokasi Foodcourt", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M143", "l": "Mal Ciputra Seraya Lt.2 (C08 & C09)", "a": "Riau", "c": "Shopping Mall"}, {"k": "M143A", "l": "Mal Ciputra Seraya Lt.1 (C03)", "a": "Riau", "c": "Shopping Mall"}, {"k": "T004", "l": "Platinum Cineplex Solo", "a": "Jawa Tengah", "c": "Bioskop"}, {"k": "M167", "l": "Mega Mall Bengkulu", "a": "Bengkulu", "c": "Shopping Mall"}, {"k": "T003", "l": "Platinum Cineplex Citimall Lahat", "a": "Sumatera Selatan", "c": "Bioskop"}, {"k": "B001", "l": "Tirtonadi Solo", "a": "Jawa Tengah", "c": "Bus Station"}, {"k": "M055B", "l": "Mall SKA Pekanbaru Lantai 3 ", "a": "Riau", "c": "Shopping Mall"}, {"k": "M055C", "l": "Mall SKA Pekanbaru Lantai 5", "a": "Riau", "c": "Shopping Mall"}, {"k": "M128A", "l": "Botani Square Mall Bogor Lantai GF - C1 Depan A&W", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M114A", "l": "Cilegon Center Mall Lantai 2", "a": "Banten", "c": "Shopping Mall"}, {"k": "M070A", "l": "Transmart Jambi (Depan Solaria)", "a": "Jambi", "c": "Shopping Mall"}, {"k": "M029", "l": "Metropolis Town Square", "a": "Banten", "c": "Shopping Mall"}, {"k": "M163", "l": "MTC Mall Panam Pekanbaru Riau  Lantai 1", "a": "Riau", "c": "Shopping Mall"}, {"k": "M163A", "l": "MTC Mall Panam Pekanbaru Riau Lantai Dasar Utara", "a": "Riau", "c": "Shopping Mall"}, {"k": "M102A", "l": "Basko Grand Mall Lantai 2", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "M037A", "l": "Mall Pekanbaru Lt. Bassement", "a": "Riau", "c": "Shopping Mall"}, {"k": "M127A", "l": "Tangcity Superblock Lantai B1", "a": "Banten", "c": "Shopping Mall"}, {"k": "M137A", "l": "Rita Supermall Tegal Lt 2", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "C028", "l": "RSUD Simpang Lima Gumul Kediri Lt. 2", "a": "Jawa Timur", "c": "Hospital"}, {"k": "H039", "l": "Bobopod Kebayoran Baru", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "H040", "l": "Bobopod Tanah Abang", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "H041", "l": "Hotel Neo+ Kebayoran Area Lobby", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "M247A", "l": "Balubur Town Square Lantai 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M241", "l": "Trans Studio Mall Makassar", "a": "Sulawesi Selatan", "c": "Shopping Mall"}, {"k": "M244", "l": "Social Market Palembang Lantai 1", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M245", "l": "Mall Ciputra Semarang", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "A054", "l": "Taman Rekreasi Selecta", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "G01", "l": "WH Jakarta", "a": "DKI Jakarta", "c": "Warehouse"}, {"k": "M244A", "l": "Social Market Palembang Lantai 2", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M171A", "l": "Ring Road City Walks Mall Medan Lantai 3", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "A055", "l": "Siantar Waterpark", "a": "Sumatera Utara", "c": "Tourist Attactions"}, {"k": "H042", "l": "Great Western Resort", "a": "Banten", "c": "Hotel"}, {"k": "H043", "l": "Hotel Novotel Pekanbaru", "a": "Riau", "c": "Hotel"}, {"k": "M246", "l": "Kediri Mall", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M249", "l": "Suzuya Mall Rantau Prapat", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M250", "l": "Siantar City Square", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "G020", "l": "Nara Park Bandung", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "M008B", "l": "The Park Mall Solo Lt.2", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "M056A", "l": "Bandung Indah Plaza Lt 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M150A", "l": "Jatinangor Town Square Lt GF", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M252", "l": "Lampung City Mall", "a": "Lampung", "c": "Shopping Mall"}, {"k": "H044", "l": "Grand Soll Marina Hotel Tangerang", "a": "Banten", "c": "Hotel"}, {"k": "M169", "l": "Tamini Square", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "F011", "l": "Pelabuhan Gilimanuk Bali", "a": "Bali", "c": "Office Tower/Pelabuhan"}, {"k": "B004", "l": "Terminal Tidar Magelang", "a": "Jawa Tengah", "c": "Bus Station"}, {"k": "M248", "l": "Suzuya Merdeka Mall L2 ", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M012A", "l": "The Plaza Millenium Medan Lt 3", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M137B", "l": "Rita Supermall Tegal Lt B", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "M215A", "l": "Pekanbaru Xchange Lt 2", "a": "Riau", "c": "Shopping Mall"}, {"k": "M254", "l": "Plaza Parahyangan", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M135A", "l": "Ambon City Center Lt GF", "a": "Maluku", "c": "Shopping Mall"}, {"k": "F013", "l": "Java Connection Bandara Yia", "a": "DI Yogyakarta", "c": "Office Tower/Pelabuhan"}, {"k": "D005F", "l": "Bandara Kualanamu Medan Area Relink", "a": "Sumatera Utara", "c": "Airport"}, {"k": "A027A", "l": "Nicoles River Park Area Carnaval Dan Resto", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "H046", "l": "Bayleaf Guest House Syariah Batu", "a": "Jawa Timur", "c": "Hotel"}, {"k": "M183A", "l": "Mega Bekasi Hypermall Lt 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M260", "l": "Mall Cikampek", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "J003", "l": "Masjid Raya Syekh Ahmad Khatib Al-Minangkabawi Lokasi Laki-Laki", "a": "Sumatera Barat", "c": "Masjid"}, {"k": "J003A", "l": "Masjid Raya Syekh Ahmad Khatib Al-Minangkabawi Lokasi Perempuan", "a": "Sumatera Barat", "c": "Masjid"}, {"k": "C022", "l": "RSUD Gambiran Kota Kediri", "a": "Jawa Timur", "c": "Hospital"}, {"k": "M200A", "l": "The Grand Outlet Lt Food Court", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M257", "l": "Tanjungpinang City Center", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "F012", "l": "Pelabuhan Balohan", "a": "Aceh", "c": "Office Tower/Pelabuhan"}, {"k": "M259", "l": "Dhoho Plaza Kediri Pintu Selatan", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "H048", "l": "Hotel Horison Ultima Makassar", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "S004", "l": "Honda Thamrin Jambi", "a": "Jambi", "c": "Showroom"}, {"k": "H047", "l": "Grand Makmur Hotel Jambi", "a": "Jambi", "c": "Hotel"}, {"k": "M073A", "l": "Resinda Park Mall Karawang Lt 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M253", "l": "Ramayana Makassar Town Square", "a": "Sulawesi Selatan", "c": "Shopping Mall"}, {"k": "AT001", "l": "Area Test 1", "a": "Area Test", "c": "Rest Area"}, {"k": "M262", "l": "Mall Batam City Square", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "M261", "l": "Mega Mall Batam Centre", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "M263", "l": "Mall Matahari Daan Mogot", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M270", "l": "Mall Artha Gading", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M269", "l": "Depok Town Square", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M265", "l": "Lamongan Plaza", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M256", "l": "Mega Trade Centre Megamas", "a": "Sulawesi Utara", "c": "Shopping Mall"}, {"k": "M005A", "l": "Mall Botania Batam Depan Gogo", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "M266", "l": "Ponorogo City Center ", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "Q001", "l": "PAM Event External", "a": "DKI Jakarta", "c": "Event"}, {"k": "M057A", "l": "Istana BEC Bandung Lt. L3A", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "P017", "l": "Indogrosir Malang", "a": "Jawa Timur", "c": "Super Market"}, {"k": "AT002", "l": "Area Test 2", "a": "Area Test", "c": "Tourist Attactions"}, {"k": "A005", "l": "Taman Aerosport Pekanbaru", "a": "Riau", "c": "Tourist Attactions"}, {"k": "H050", "l": "Soll Marina Hotel Serpong", "a": "Banten", "c": "Hotel"}, {"k": "H049", "l": "Bobopod Airport CBC Tangerang", "a": "Banten", "c": "Hotel"}, {"k": "C030", "l": "RSUD Praya Ruang Tunggu Farmasi", "a": "Nusa Tenggara Barat", "c": "Hospital"}, {"k": "M032B", "l": "Sleman City Hall Lt.2 Depan TimeZone", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "M182A", "l": "Ujung Berung Town Square Lt  2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "C029", "l": "RSUD Teluk Kuantan Ruang Rawat Inap", "a": "Riau", "c": "Hospital"}, {"k": "M272", "l": "Citiplaza Bondowoso", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "C031", "l": "Skinologic Clinic", "a": "Riau", "c": "Hospital"}, {"k": "M275", "l": "Plaza Bukit Tinggi", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "B005", "l": "Terminal Tegal", "a": "Jawa Tengah", "c": "Bus Station"}, {"k": "M274", "l": "Bencoolen Mall Bengkulu", "a": "Bengkulu", "c": "Shopping Mall"}, {"k": "M097B", "l": "Centre Point Medan Lantai 1", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "F014", "l": "Bappeda Jawa Timur", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "H051", "l": "Aston Mojokerto Hotel & Conference Center", "a": "Jawa Timur", "c": "Hotel"}, {"k": "M036A", "l": "Plaza Bintaro Jaya Banten Lt.2", "a": "Banten", "c": "Shopping Mall"}, {"k": "G023", "l": "Jet Billiard", "a": "Banten", "c": "Restaurant/Cafe"}, {"k": "H052", "l": "Gammara Hotel Makassar", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "H053", "l": "Hotel Royal Bay Makassar", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "C032", "l": "Apotek Wellings Tebet", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "A001A", "l": "Ancol Dufan Kawasan Hikayat", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "A002A", "l": "Dago Dreampark Lokasi Area Pirate", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "A006A", "l": "Sariater Area Kolam Kimanis", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "A011A", "l": "The Great Asia Africa Bandung Lt.B3", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "K014", "l": "Stasiun Madiun", "a": "Jawa Timur", "c": "Train Station"}, {"k": "K015", "l": "Stasiun Kediri", "a": "Jawa Timur", "c": "Train Station"}, {"k": "M276", "l": "Bekasi Trade Center", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M225A", "l": "Cibinong City Mall Lt.1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "H056", "l": "Grand Asia Hotel Makassar", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "H054", "l": "Hotel Khas Makassar ", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "H055", "l": "Whiz Prime Hotel Sudirman Makassar ", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "M277", "l": "A.S.S Mall Brebes", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "A021A", "l": "DCastello Ciater Lokasi Tempat Oleh-Oleh", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M064A", "l": "Living Word Pekanbaru Lt. 2-18", "a": "Riau", "c": "Shopping Mall"}, {"k": "P018", "l": "Artasedana Sanur", "a": "Bali", "c": "Super Market"}, {"k": "P020", "l": "Artasedana Ngurah Rai Singaraja", "a": "Bali", "c": "Super Market"}, {"k": "P019", "l": "Artasedana Sesetan", "a": "Bali", "c": "Super Market"}, {"k": "P021", "l": "Artasedana Surapati", "a": "Bali", "c": "Super Market"}, {"k": "M138", "l": "Suzuya City Mall Rantau Prapat", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "G024", "l": "Navasari Pool & Resto", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "F015", "l": "Pelabuhan Bakauheni", "a": "Lampung", "c": "Office Tower/Pelabuhan"}, {"k": "P022", "l": "Indogrosir Jambi", "a": "Jambi", "c": "Super Market"}, {"k": "P023", "l": "Alfamart Rest Area KM 43 Merak", "a": "Banten", "c": "Super Market"}, {"k": "P024", "l": "Alfamart Rest Area KM 19B-2 Bekasi", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P035", "l": "Alfamart Rest Area KM 39A-2 Cikampek", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P037", "l": "Alfamart Rest Area KM 626B-1 Madiun", "a": "Jawa Timur", "c": "Super Market"}, {"k": "P049", "l": "Toserba Yogya Heritage", "a": "Jawa Barat", "c": "Super Market"}, {"k": "T007", "l": "Platinum Cineplex Cibitung", "a": "Jawa Barat", "c": "Bioskop"}, {"k": "P039", "l": "Alfamart Rest Area KM 208B Cirebon", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P029", "l": "Alfamart Rest Area KM 833B Purbolinggo", "a": "Jawa Timur", "c": "Super Market"}, {"k": "P031", "l": "Alfamart Rest Area KM 792B Pasuruan", "a": "Jawa Timur", "c": "Super Market"}, {"k": "P030", "l": "Alfamart Rest Area KM 819A Pasuruan", "a": "Jawa Timur", "c": "Super Market"}, {"k": "P043", "l": "Alfamart Rest Area KM 26-1 Sidoarjo", "a": "Jawa Timur", "c": "Super Market"}, {"k": "H057", "l": "Grand Central Premier Hotel Medan", "a": "Sumatera Utara", "c": "Hotel"}, {"k": "P050", "l": "Toserba Yogya Slawi", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "M020A", "l": "Cirebon Super Block Mall LG-08", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "G025", "l": "Concordia Lounge Domestic Lombok", "a": "Nusa Tenggara Barat", "c": "Restaurant/Cafe"}, {"k": "M121C", "l": "Duta Mall Banjarmasin LD-11", "a": "Kalimantan Selatan", "c": "Shopping Mall"}, {"k": "J004", "l": "Masjid Raya Al-Ittihad Tebet Mas", "a": "DKI Jakarta", "c": "Masjid"}, {"k": "M214A", "l": "CitiMall Cianjur 2 Lt. 1", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "K016", "l": "Stasiun Tegal", "a": "Jawa Tengah", "c": "Train Station"}, {"k": "A038A", "l": "Taman Mas Kemambang Lokasi Belakang Rumah Makan Warras", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "A039A", "l": "Ancol Ocean Dream Samudra Lokasi 5D", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "A041A", "l": "Saloka Theme Park Lokasi Polah Bocah", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "A057A", "l": "Water Kingdom Mekarsari Lokasi Yokabento", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "C010A", "l": "RS Siloam Lippo Village MCU", "a": "Banten", "c": "Hospital"}, {"k": "C010B", "l": "RS Siloam Lippo Village Ruang Tunggu Lt.6", "a": "Banten", "c": "Hospital"}, {"k": "C014A", "l": "RS Indriati Boyolali Lt. 2", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C016A", "l": "RS Mayapada Tanggerang Gedung 2 Lt 1 Ruang Cardio", "a": "Banten", "c": "Hospital"}, {"k": "C016B", "l": "RS Mayapada Tanggerang Gedung 3 Lt 1 Ruang Farmasi", "a": "Banten", "c": "Hospital"}, {"k": "C016C", "l": "RS Mayapada Tanggerang Gedung 3 Lt 3 Ruang Tunggu", "a": "Banten", "c": "Hospital"}, {"k": "C016D", "l": "RS Mayapada Tanggerang Gedung 3 Lt 3 Ruang Basment", "a": "Banten", "c": "Hospital"}, {"k": "C016E", "l": "RS Mayapada Tanggerang Gedung 1 Lt 1 Ruang Tnc", "a": "Banten", "c": "Hospital"}, {"k": "C016F", "l": "RS Mayapada Tanggerang Gedung 1 Lt 1 Ruang Fastrack", "a": "Banten", "c": "Hospital"}, {"k": "C016G", "l": "RS Mayapada Tanggerang Gedung 1 Lt 1 Ruang Farmasi Center", "a": "Banten", "c": "Hospital"}, {"k": "C016H", "l": "RS Mayapada Tanggerang Gedung 1 Lt 2 Ruang Lab", "a": "Banten", "c": "Hospital"}, {"k": "C016I", "l": "RS Mayapada Tanggerang Gedung 1 Lt 2 Ruang Pendaftaran", "a": "Banten", "c": "Hospital"}, {"k": "C016J", "l": "RS Mayapada Tanggerang Gedung 1 Lt 3 Ruang MCU", "a": "Banten", "c": "Hospital"}, {"k": "C004A", "l": "RS Islam Sultan Agung Banjarbaru Customer Service", "a": "Kalimantan Selatan", "c": "Hospital"}, {"k": "C017A", "l": "RS Islam Siti Hajar Poli Eksekutif", "a": "Nusa Tenggara Barat", "c": "Hospital"}, {"k": "C019B", "l": "RSUD Dr Adjidarmo Rangkasbitung Gedung B Lt. 2", "a": "Banten", "c": "Hospital"}, {"k": "M068A", "l": "Transmart Pangkal Pinang Pintu Lift", "a": "Kepulauan Bangka Belitung", "c": "Shopping Mall"}, {"k": "M027A", "l": "Mall Boxies 123 Lt.2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M027B", "l": "Mall Boxies 123 Lt.3", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M026A", "l": "Lippo Plaza Jambi Lt. 1", "a": "Jambi", "c": "Shopping Mall"}, {"k": "C023A", "l": "RSUD Khidmat Sehat Afiat KISA Depok Lt. 2", "a": "Jawa Barat", "c": "Hospital"}, {"k": "M053A", "l": "Sun Plaza Medan  Depan Gramedia", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "M009A", "l": "Maspion Square Lt. UG", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "F008A", "l": "Pelabuhan PadangBai Bali Ruang Tunggu Keberangkatan", "a": "Bali", "c": "Office Tower/Pelabuhan"}, {"k": "C029A", "l": "RSUD Teluk Kuantan Ruang Karyawan", "a": "Riau", "c": "Hospital"}, {"k": "C029B", "l": "RSUD Teluk Kuantan Lobby", "a": "Riau", "c": "Hospital"}, {"k": "H016A", "l": "Royal Safari Garden Area Bamper Car", "a": "Jawa Barat", "c": "Hotel"}, {"k": "C030A", "l": "RSUD Praya Poliklinik I", "a": "Nusa Tenggara Barat", "c": "Hospital"}, {"k": "H016B", "l": "Royal Safari Garden Area Komando", "a": "Jawa Barat", "c": "Hotel"}, {"k": "H041A", "l": "Hotel Neo+ Kebayoran Area Coffe Shop", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "H026A", "l": "Atria Hotel Gading Serpong Area Lobby Grand Ballroom", "a": "Banten", "c": "Hotel"}, {"k": "D004A", "l": "Bandara Supadio Pontianak Gate 3 Area Landasan", "a": "Kalimantan Barat", "c": "Airport"}, {"k": "D004B", "l": "Bandara Supadio Pontianak Area Check In", "a": "Kalimantan Barat", "c": "Airport"}, {"k": "H023A", "l": "Hotel Aston Bogor Area Lobby", "a": "Jawa Barat", "c": "Hotel"}, {"k": "L004A", "l": "Jagorawi Golf & Country Club Ruang Salin Perempuan", "a": "Jawa Barat", "c": "Sport"}, {"k": "M120A", "l": "BSD Plaza Lt. 1", "a": "Banten", "c": "Shopping Mall"}, {"k": "M016A", "l": "Mall Kuningan City Lt. 3", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "D014A", "l": "Bandara Kulon Progo Yogyakarta Domestik Gate 1", "a": "DI Yogyakarta", "c": "Airport"}, {"k": "D014B", "l": "Bandara Kulon Progo Yogyakarta Domestik Gate 2", "a": "DI Yogyakarta", "c": "Airport"}, {"k": "D014C", "l": "Bandara Kulon Progo Yogyakarta Domestik Gate 3", "a": "DI Yogyakarta", "c": "Airport"}, {"k": "M031A", "l": "The King Shopping Center  Lt. LG Gramedia", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M031B", "l": "The King Shopping Center  Lt. 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M031C", "l": "The King Shopping Center  Lt. 3 Selma", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "D015A", "l": "Bandara Ahmad Yani Semarang Gate 1", "a": "Jawa Tengah", "c": "Airport"}, {"k": "D015B", "l": "Bandara Ahmad Yani Semarang Gate 3", "a": "Jawa Tengah", "c": "Airport"}, {"k": "D015C", "l": "Bandara Ahmad Yani Semarang Internasional", "a": "Jawa Tengah", "c": "Airport"}, {"k": "M031D", "l": "The King Shopping Center  Lt. 3 Sport Station", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M031E", "l": "The King Shopping Center  Lt. 4", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "G005A", "l": "Berlin Pool And Bistro Pontianak Lt. 2", "a": "Kalimantan Barat", "c": "Restaurant/Cafe"}, {"k": "M069A", "l": "Transmart Padang  Lt.2", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "M050A", "l": "Green Walk Mall Lt. 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M067A", "l": "Grage Mall Cirebon Lt.2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M116A", "l": "Lippo Plaza Aceh Lt. GF", "a": "Aceh", "c": "Shopping Mall"}, {"k": "M129A", "l": "Ramayana Plaza Andalas Padang Lt. 4", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "M093A", "l": "Bakauheni Shopping Mall Lt. 1", "a": "Lampung", "c": "Shopping Mall"}, {"k": "M133A", "l": "Sukaramai Trade Center  Baru Lobby Bonjol", "a": "Riau", "c": "Shopping Mall"}, {"k": "M082A", "l": "Mall Sosoro Lt. 1", "a": "Banten", "c": "Shopping Mall"}, {"k": "M121A", "l": "Duta Mall Banjarmasin LD-08", "a": "Kalimantan Selatan", "c": "Shopping Mall"}, {"k": "M121B", "l": "Duta Mall Banjarmasin LD-02", "a": "Kalimantan Selatan", "c": "Shopping Mall"}, {"k": "H013A", "l": "Surabaya Suites Hotel Area Pool & Gym", "a": "Jawa Timur", "c": "Hotel"}, {"k": "M054A", "l": "Java Mall Semarang Lt. 3", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "M024A", "l": "Mall Balekota Tangerang Area Lobby Passer", "a": "Banten", "c": "Shopping Mall"}, {"k": "M226", "l": "Mall Cijantung", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M062", "l": "Jambi Prima Mall", "a": "Jambi", "c": "Shopping Mall"}, {"k": "M047", "l": "Marchand Hype Station Bintaro", "a": "Banten", "c": "Shopping Mall"}, {"k": "P025", "l": "Alfamart Rest Area KM 45A Bogor", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P026", "l": "Alfamart Rest Area KM 45A-2 Bogor", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P027", "l": "Artasedana Amlapura", "a": "Bali", "c": "Super Market"}, {"k": "P028", "l": "Alfamart Raya Kartini Cirebon", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P033", "l": "Alfamart Diponegoro ", "a": "Jawa Timur", "c": "Super Market"}, {"k": "P032", "l": "Mutiara Cahaya Mejasem", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "M033A", "l": "Baywalk Mall Pluit Lt. 1", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "P038", "l": "Alfamart Rest Area KM 575A Ngawi", "a": "Jawa Timur", "c": "Super Market"}, {"k": "M198A", "l": "Lippo Plaza Kupang Lt. UG", "a": "Nusa Tenggara Timur", "c": "Shopping Mall"}, {"k": "M227", "l": "Trans Studio Mall Bandung L3", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M228", "l": "Citimall Lahat LG ", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M230", "l": "Plaza Kalibata (EFATA GRASIA) ", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "C034", "l": "RS Medika Dramaga", "a": "Jawa Barat", "c": "Hospital"}, {"k": "F016", "l": "PT Bima Sakti Multi Energi", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "C035", "l": "Norma Aesthetic Clinic Madiun", "a": "Jawa Timur", "c": "Hospital"}, {"k": "P053", "l": "Indogrosir Bogor", "a": "Jawa Barat", "c": "Super Market"}, {"k": "H059", "l": "Bobopod ITC Kuningan Jakarta", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "A061", "l": "Bogor Aquagame", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "F017", "l": "Graha Pena Riau", "a": "Riau", "c": "Office Tower/Pelabuhan"}, {"k": "K017", "l": "Stasiun Jatibarang", "a": "Jawa Barat", "c": "Train Station"}, {"k": "M232", "l": "Ramayana Cilegon", "a": "Banten", "c": "Shopping Mall"}, {"k": "M231", "l": "Plaza Medan Fair", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "H060", "l": "Apartement Trimezia Beverly-Paramount Serpong", "a": "Banten", "c": "Hotel"}, {"k": "H061", "l": "Shanaya Resort Malang", "a": "Jawa Timur", "c": "Hotel"}, {"k": "H062", "l": "Bobobox Pods Alun Alun Bandung", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M048C", "l": "Lombok Epicentrum Mall Lantai GF", "a": "Nusa Tenggara Barat", "c": "Shopping Mall"}, {"k": "C036", "l": "RSU Banjar Patroman", "a": "Jawa Barat", "c": "Hospital"}, {"k": "M237", "l": "Suzuya Tanjung Morawa", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "D010E", "l": "Bandara Syamsuddin Noor Banjarmasin Gate 1", "a": "Kalimantan Selatan", "c": "Airport"}, {"k": "J005", "l": "Masjid Al-Hakim Padang", "a": "Sumatera Barat", "c": "Masjid"}, {"k": "C038", "l": "RSUD Cimacan", "a": "Jawa Barat", "c": "Hospital"}, {"k": "M242", "l": "Sun East Mall Banyuwangi", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M243", "l": "Mall Mandau City", "a": "Riau", "c": "Shopping Mall"}, {"k": "H064", "l": "Fame Hotel Gading Serpong", "a": "Banten", "c": "Hotel"}, {"k": "P055", "l": "Naga Swalayan Cikarang", "a": "Jawa Barat", "c": "Super Market"}, {"k": "G027", "l": "Kentring Manik (CV Pesona Indah Nusantara)", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "M251", "l": "Festival Citylink Bandung", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "D017E", "l": "Bandara Juanda Surabaya Gate 11 Sebelah Travelator", "a": "Jawa Timur", "c": "Airport"}, {"k": "D018A", "l": "Bandara Ngurah Rai Bali Gate 6", "a": "Bali", "c": "Airport"}, {"k": "A047", "l": "Taman Ruang Playground Riau", "a": "Riau", "c": "Tourist Attactions"}, {"k": "G030", "l": "Rosin Resto Subang Rest Area", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "P056", "l": "Indogrosir Cikokol", "a": "Banten", "c": "Super Market"}, {"k": "F019", "l": "Polygon Bike Hub", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "F020", "l": "Pelabuhan Ajibata Area Kapal Pora-pora", "a": "Sumatera Utara", "c": "Office Tower/Pelabuhan"}, {"k": "D005G", "l": "Bandara Kualanamu Medan Gate 5", "a": "Sumatera Utara", "c": "Airport"}, {"k": "M217", "l": "Buaran Plaza", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "M255", "l": "Sukaregang Leather Centre", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A062", "l": "Scientia Square Park", "a": "Banten", "c": "Shopping Mall"}, {"k": "A063", "l": "Taman Balekambang Surakarta", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "M273", "l": "Itc Roxy  Mas", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "G033", "l": "The Grove North Sunter", "a": "DKI Jakarta", "c": "Restaurant/Cafe"}, {"k": "C040", "l": "RS Islam Aminah Blitar", "a": "Jawa Timur", "c": "Hospital"}, {"k": "M061B", "l": "Cihampelas Walk Lantai GF Luar", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M061C", "l": "Cihampelas Walk Bandung Lantai GF K21", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M225B", "l": "Cibinong City Mall Lt.UG - Tyeso", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "F020A", "l": "Pelabuhan Ajibata Area Kapal Ihan Batak", "a": "Sumatera Utara", "c": "Office Tower/Pelabuhan"}, {"k": "C039", "l": "RS Bhayangkara Kediri", "a": "Jawa Timur", "c": "Hospital"}, {"k": "C041", "l": "RS. Dadi Keluarga Ciamis", "a": "Jawa Barat", "c": "Hospital"}, {"k": "A064", "l": "Atlantis Water Adventure Ancol", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "B006", "l": "Terminal Tipe A Gambut Barakat", "a": "Kalimantan Selatan", "c": "Bus Station"}, {"k": "U004", "l": "Ma'Had Aisyah Binti Abu Bakar Li Al-Dakwah", "a": "Jawa Barat", "c": "University"}, {"k": "S005", "l": "Autokool Cirebon", "a": "Jawa Barat", "c": "Showroom"}, {"k": "M148", "l": "Aeon Mall Bsd City", "a": "Banten", "c": "Shopping Mall"}, {"k": "H065", "l": "Front One The Andia Boyolali", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "H066", "l": "Starlet Hotel Serpong Tangerang", "a": "Banten", "c": "Hotel"}, {"k": "G035", "l": "Point Coffee Gedhe Rest Area Km 65A Medan", "a": "Sumatera Utara", "c": "Restaurant/Cafe"}, {"k": "J006", "l": "Gbi Christ Cathedral", "a": "Banten", "c": "Masjid"}, {"k": "H067", "l": "Lrt City Sentul - Royal Sentul Park", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M153", "l": "Basko City Mall Padang", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "M278", "l": "Discovery Mall Bali", "a": "Bali", "c": "Shopping Mall"}, {"k": "G036", "l": "Kendedes Pusat Oleh Oleh Batu Malang", "a": "Jawa Timur", "c": "Restaurant/Cafe"}, {"k": "C044", "l": "Rs Murni Teguh Memorial", "a": "Sumatera Utara", "c": "Hospital"}, {"k": "C045", "l": "Rsia Murni Teguh Rosiva", "a": "Sumatera Utara", "c": "Hospital"}, {"k": "C046", "l": "Rsu Murni Teguh Methodist Susanna Wesley", "a": "Sumatera Utara", "c": "Hospital"}, {"k": "C048", "l": "Rs Murni Teguh Pematang Siantar", "a": "Sumatera Utara", "c": "Hospital"}, {"k": "C049", "l": "Rs Murni Teguh Ciledug", "a": "Banten", "c": "Hospital"}, {"k": "C050", "l": "Rs Murni Teguh Sudirman Jakarta ", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "C051", "l": "Murni Teguh Tuban Bali Hospital", "a": "Bali", "c": "Hospital"}, {"k": "C052", "l": "Rs Murni Teguh Naripan Bandung", "a": "Jawa Barat", "c": "Hospital"}, {"k": "C053", "l": "Rs Murni Teguh Pejaten", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "F021", "l": "Pelabuhan Gili Mas", "a": "Nusa Tenggara Barat", "c": "Office Tower/Pelabuhan"}, {"k": "F022", "l": "Pelabuhan Kedaro", "a": "Nusa Tenggara Barat", "c": "Office Tower/Pelabuhan"}, {"k": "A023B", "l": "Jatim Park 3 - Funtech", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "G037", "l": "Riau Garden Pekanbaru", "a": "Riau", "c": "Restaurant/Cafe"}, {"k": "M196", "l": "K Square Mall Batam", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "M279", "l": "It Center Manado", "a": "Sulawesi Utara", "c": "Shopping Mall"}, {"k": "D026", "l": "Bandara Internasional  Soekarno-Hatta", "a": "Banten", "c": "Airport"}, {"k": "M115C", "l": "Nagoya Hill Mall Lantai 2 Depan Kidzallia (SFCN025)", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "D021A", "l": "Bandara Sultan Aji Muhammad Sulaiman Sepinggan Balikpapan Gate 2", "a": "Kalimantan Timur", "c": "Airport"}, {"k": "M164A", "l": "Plaza The Central Pekanbaru Lt. 1", "a": "Riau", "c": "Shopping Mall"}, {"k": "M164B", "l": "Plaza The Central Pekanbaru Lt. 2", "a": "Riau", "c": "Shopping Mall"}, {"k": "H068", "l": "Puncak Pass Resort ", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M280", "l": "Ramayana Pontianak", "a": "Kalimantan Barat", "c": "Shopping Mall"}, {"k": "P057", "l": "Griya Batununggal Bandung", "a": "Jawa Barat", "c": "Super Market"}, {"k": "M130A", "l": "Lippo Plaza Medan Lt.1", "a": "Sumatera Utara", "c": "Shopping Mall"}, {"k": "C001A", "l": "RS Bhakti Timah Pangkalpinang Lt. 2", "a": "Kepulauan Bangka Belitung", "c": "Hospital"}, {"k": "J007", "l": "Masjid Raya Mujahidin Pontianak", "a": "Kalimantan Barat", "c": "Masjid"}, {"k": "M281", "l": "One District At Puri ", "a": "Banten", "c": "Shopping Mall"}, {"k": "M282", "l": "Palur Plaza Karanganyar", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "A065", "l": "Supersplash Waterpark Kartika Residence", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "A022A", "l": "Ancol Sea World Area Foodcourt", "a": "DKI Jakarta", "c": "Tourist Attactions"}, {"k": "D017F", "l": "Bandara Juanda Surabaya Gate 11 Sebelah Playground", "a": "Jawa Timur", "c": "Airport"}, {"k": "J008", "l": "Masjid Agung Kota Sukabumi", "a": "Jawa Barat", "c": "Masjid"}, {"k": "L006", "l": "Alam Sutera Sport Center", "a": "Banten", "c": "Sport"}, {"k": "F006", "l": "World Capital Tower", "a": "DKI Jakarta", "c": "Office Tower/Pelabuhan"}, {"k": "M283", "l": "The Galeria Mall Banjarmasin", "a": "Kalimantan Selatan", "c": "Shopping Mall"}, {"k": "M183B", "l": "Mega Bekasi Hypermall Area Travel", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "S006", "l": "Auto 2000 Pramuka", "a": "DKI Jakarta", "c": "Showroom"}, {"k": "S007", "l": "Auto 2000 Cempaka Putih", "a": "DKI Jakarta", "c": "Showroom"}, {"k": "H069", "l": "Swiss Belcourt Makassar", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "P059", "l": "Arta Sedana Negara", "a": "Bali", "c": "Super Market"}, {"k": "H071", "l": "Grand Arjuna Hotel Bandung", "a": "Jawa Barat", "c": "Hotel"}, {"k": "H072", "l": "Hotel Grandhika Setiabudi Medan", "a": "Sumatera Utara", "c": "Hotel"}, {"k": "H073", "l": "Hotel Crystal Inn", "a": "Jawa Timur", "c": "Hotel"}, {"k": "M285", "l": "The East Batam", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "H070", "l": "Hotel Sutha Lin Syariah Jambi", "a": "Jambi", "c": "Hotel"}, {"k": "A066", "l": "Snowville Sentul", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M073B", "l": "Resinda Park Mall Karawang Basement", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M133B", "l": "Sukaramai Trade Center  Lt.1", "a": "Riau", "c": "Shopping Mall"}, {"k": "G038", "l": "Fresh Fields", "a": "DKI Jakarta", "c": "Restaurant/Cafe"}, {"k": "M284", "l": "Mall Of Bengkinang Lt. Dasar", "a": "Riau", "c": "Shopping Mall"}, {"k": "M284A", "l": "Mall Of Bengkinang Lt. 1", "a": "Riau", "c": "Shopping Mall"}, {"k": "P061", "l": "Swalayan Goori Demak", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "P062", "l": "Swalayan Goori Gunung Pati", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "P063", "l": "Swalayan Goori Karangjati", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "P064", "l": "Swalayan Goori Jatisari", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "P065", "l": "Swalayan Goori Ngaliyan ", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "M111C", "l": "Palembang Trade Center Lantai M2", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M111D", "l": "Palembang Trade Center Lantai GF (Lobby Barat)", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M111E", "l": "Palembang Trade Center Lantai M3", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M157A", "l": "Royal Plaza Surabaya Lt.2", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "P060", "l": "Hypermart Cyberpark Karawaci Lku", "a": "Banten", "c": "Super Market"}, {"k": "M128B", "l": "Botani Square Mall Bogor Lantai LG (Depan Panorama)", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "C039A", "l": "RS Bhayangkara Kediri Lt.2", "a": "Jawa Timur", "c": "Hospital"}, {"k": "D019A", "l": "Bandara Radin Inten II International Lampung Gate 2", "a": "Lampung", "c": "Airport"}, {"k": "H074", "l": "Cordia Hotel Banjarmasin", "a": "Kalimantan Selatan", "c": "Hotel"}, {"k": "M287", "l": "Trans Studio Mall Cibubur", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A067", "l": "Safari Solo", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "S008", "l": "Agung Toyota Jambi Pall 10", "a": "Jambi", "c": "Showroom"}, {"k": "A068", "l": "Jatim Park 1", "a": "Jawa Timur", "c": "Tourist Attactions"}, {"k": "P048", "l": "Yogya Riau Junction Bandung", "a": "Jawa Barat", "c": "Super Market"}, {"k": "M183C", "l": "Mega Bekasi Hypermall Lt.GF Unit", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M227A", "l": "Trans Studio Mall Bandung Lantai 2", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "D010F", "l": "Bandara Syamsuddin Noor Banjarmasin  Bagage Claim", "a": "Kalimantan Selatan", "c": "Airport"}, {"k": "J009", "l": "Masjid Agung At Taqwa Bengkulu", "a": "Bengkulu", "c": "Masjid"}, {"k": "C037A", "l": "RSUD Kardinah Tegal Ruang Informasi", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C037B", "l": "RSUD Kardinah Tegal Ruang Dewadaru", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C037C", "l": "RSUD Kardinah Tegal Ruang RA Kartini", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C037D", "l": "RSUD Kardinah Tegal Ruang Komite", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C055", "l": "Koperasi Mitra Husada Sidoarjo Gedung Pusat Terpadu", "a": "Jawa Timur", "c": "Hospital"}, {"k": "C055A", "l": "Koperasi Mitra Husada Sidoarjo Kafe Selazzar", "a": "Jawa Timur", "c": "Hospital"}, {"k": "G039", "l": "Warkop Udaa ", "a": "DKI Jakarta", "c": "Restaurant/Cafe"}, {"k": "A069", "l": "Skyward Project Bandung Area Locker Room", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "A069A", "l": "Skyward Project Bandung Area Slide", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "F024", "l": "Pelabuhan ASDP Roro Telaga Punggur ", "a": "Kepulauan Riau", "c": "Office Tower/Pelabuhan"}, {"k": "C056", "l": "Siloam Hospitals Agora Cempaka Putih - Lobby Siloam Hospitals Agora", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "C056A", "l": "Siloam Hospitals Agora Cempaka Putih - Depan Fo Dan Samping Ruang Tunggu Farmasi", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "C056B", "l": "Siloam Hospitals Agora Cempaka Putih -Ruang Tunggu OPD Lt. 11", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "G040", "l": "Warung Kopi Bahagia Bersama", "a": "Banten", "c": "Restaurant/Cafe"}, {"k": "P071", "l": "Hyfresh Supermarket Bojong Sari Sawangan", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P072", "l": "Hypermart Pesona Square Depok", "a": "Jawa Barat", "c": "Super Market"}, {"k": "G041", "l": "HW Livehouse QBIG BSD", "a": "Banten", "c": "Restaurant/Cafe"}, {"k": "P070", "l": "Hyfresh Cikarang Festival", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P068", "l": "Hypermart Daan Mogot ", "a": "DKI Jakarta", "c": "Super Market"}, {"k": "P066", "l": "Hypermart Metro Trade Center (Metro Indah Mall Bandung)", "a": "Jawa Barat", "c": "Super Market"}, {"k": "M049B", "l": "Green Pramuka Square Lt. UF ( Depan Oh Some )", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "C055B", "l": "Koperasi Mitra Husada Sidoarjo Mawar Kuning", "a": "Jawa Timur", "c": "Hospital"}, {"k": "C055C", "l": "Koperasi Mitra Husada Sidoarjo Graha Delta Husada II", "a": "Jawa Timur", "c": "Hospital"}, {"k": "M117A", "l": "Pentacity Shopping Venue L.UG", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "C058", "l": "RS Restu Kasih  Poli Umum", "a": "DKI Jakarta", "c": "Hospital"}, {"k": "J010", "l": "Masjid Raya Al-Insan Patal Senayan ", "a": "DKI Jakarta", "c": "Masjid"}, {"k": "H077", "l": "Atria Hotel Malang", "a": "Jawa Timur", "c": "Hotel"}, {"k": "R005", "l": "Rest Area KM 116A Lampung", "a": "Lampung", "c": "Rest Area"}, {"k": "P073", "l": "Hypermart Metropolis Tanggerang ", "a": "Banten", "c": "Super Market"}, {"k": "A070", "l": "Caliandra Gallery Sariater Campervan Park", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "A072", "l": "Dusun Bambu Lembang Lobby Playground", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "H076", "l": "Sari Ater Kamboti Bandung", "a": "Jawa Barat", "c": "Hotel"}, {"k": "C057", "l": "Siloam Hospitals Dhirga Surya Medan", "a": "Sumatera Utara", "c": "Hospital"}, {"k": "H078", "l": "Unhas Hotel & Convention", "a": "Sulawesi Selatan", "c": "Hotel"}, {"k": "R006", "l": "Rest Area KM 116B Lampung", "a": "Lampung", "c": "Rest Area"}, {"k": "M007B", "l": "Teras Kota Basement", "a": "Banten", "c": "Shopping Mall"}, {"k": "C063", "l": "RS Hermina Opi Jakabaring ", "a": "Sumatera Selatan", "c": "Hospital"}, {"k": "C061", "l": "RS Betha Medika Titik Pendaftaran ", "a": "Jawa Barat", "c": "Hospital"}, {"k": "C062", "l": "RS Kartika Kasih Titik Lobby", "a": "Jawa Barat", "c": "Hospital"}, {"k": "H079", "l": "Gulala Azana Hotel & Resort Guci Tegal", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "H080", "l": "Labersa Hotel & Convention Center Samosir", "a": "Sumatera Utara", "c": "Hotel"}, {"k": "H081", "l": "Grand Kanaya Hotel", "a": "Sumatera Utara", "c": "Hotel"}, {"k": "M011A", "l": "Pamulang Square Lt.Dasar", "a": "Banten", "c": "Shopping Mall"}, {"k": "H082", "l": "Camp Hulu Cai Gerbang Babakan", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M289", "l": "BT BATIK TRUSMI", "a": "Jawa Barat", "c": "Super Market"}, {"k": "L008", "l": "Flow Padel", "a": "Sumatera Utara", "c": "Sport"}, {"k": "M153A", "l": "Basko City Mall Padang Lantai 1", "a": "Sumatera Barat", "c": "Shopping Mall"}, {"k": "C064", "l": "RS Sumber Kasih Cirebon", "a": "Jawa Barat", "c": "Hospital"}, {"k": "M290", "l": "Mutiara Cahaya Slawi", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "C065", "l": "RSUD R. Syamsudin Sukabumi - Titik Lobby Pendaftaran ", "a": "Jawa Barat", "c": "Hospital"}, {"k": "C065A", "l": "RSUD R. Syamsudin Sukabumi - Titik Management ", "a": "Jawa Barat", "c": "Hospital"}, {"k": "C065B", "l": "RSUD R. Syamsudin Sukabumi - Titik Lobby Seruni", "a": "Jawa Barat", "c": "Hospital"}, {"k": "H084", "l": "Cityloog Hotel Tebet Titik Lobby ", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "F025", "l": "Bank DBS Indonesia Tower Lantai 34", "a": "DKI Jakarta", "c": "Office Tower/Pelabuhan"}, {"k": "J011", "l": "Masjid Agung Nurul Ikhlas Cilegon", "a": "Banten", "c": "Masjid"}, {"k": "P074", "l": "Hypermart Mega Mall Batam Centre", "a": "Riau", "c": "Super Market"}, {"k": "H083", "l": "Hermes Palace Hotel Aceh", "a": "Aceh", "c": "Hotel"}, {"k": "H085", "l": "Hotel Santika Gunung Kidul", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "A072A", "l": "Dusun Bambu Lembang Lounge Mountain Coaster ", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "M107B", "l": "Singkawang Grandmall Lantai 2", "a": "Kalimantan Barat", "c": "Shopping Mall"}, {"k": "K010A", "l": "Stasiun Bandung Ruang Tunggu Utara Baru", "a": "Jawa Barat", "c": "Train Station"}, {"k": "M184A", "l": "Mall Paradise Walk Serpong Area UG-05B", "a": "Banten", "c": "Shopping Mall"}, {"k": "M247", "l": "Balubur Town Square Lantai 1 (Depan Hokben)", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "F026", "l": "Terminal Ferry Telaga Punggur Batam", "a": "Kepulauan Riau", "c": "Office Tower/Pelabuhan"}, {"k": "K016A", "l": "Stasiun Tegal Titik Baru", "a": "Jawa Tengah", "c": "Train Station"}, {"k": "M137C", "l": "Rita Supermall Tegal L. UG", "a": "Jawa Tengah", "c": "Shopping Mall"}, {"k": "G042", "l": "Ninja Billiard Blok M Square", "a": "DKI Jakarta", "c": "Restaurant/Cafe"}, {"k": "H086", "l": "Fresh Hotel Sukabumi - Lobby Area", "a": "Jawa Barat", "c": "Hotel"}, {"k": "J012", "l": "Masjid Agung Cianjur", "a": "Jawa Barat", "c": "Masjid"}, {"k": "C066", "l": "RS Cinta Kasih", "a": "Banten", "c": "Hospital"}, {"k": "K004A", "l": "Stasiun Malang Kotabaru Lantai 2", "a": "Jawa Timur", "c": "Train Station"}, {"k": "P075", "l": "Indomaret Fresh Cihampelas 149", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P076", "l": "Indomaret Fresh Dago 166", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P077", "l": "Indomaret Fresh Surya Sumantri", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P078", "l": "Indomaret Point Braga", "a": "Jawa Barat", "c": "Super Market"}, {"k": "P079", "l": "Tropi Mart & Tropi Toko Buku Sijenjang", "a": "Jambi", "c": "Super Market"}, {"k": "G043", "l": "Bumi Aki Puncak ", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "K018", "l": "Stasiun Pekalongan", "a": "Jawa Tengah", "c": "Train Station"}, {"k": "M288", "l": "Bigmall Samarinda Lantai  2 Depan XXI", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "M288A", "l": "Bigmall Samarinda Lantai G Depan Kidzoona ", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "M291", "l": "Plaza Araya", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "P080", "l": "Graha Mulia Probolinggo", "a": "Jawa Timur", "c": "Super Market"}, {"k": "P081", "l": "Graha Mulia Toserba Lumajang", "a": "Jawa Timur", "c": "Super Market"}, {"k": "L009", "l": "59 Hub - Fiftynine Hub", "a": "Sumatera Utara", "c": "Sport"}, {"k": "C067", "l": "RS Universitas Andalas", "a": "Sumatera Barat", "c": "Hospital"}, {"k": "A074", "l": " Wisata Bukit Domba Sentul", "a": "Jawa Barat", "c": "Tourist Attactions"}, {"k": "H087", "l": "Balairung Hotel Jakarta Area Lobby", "a": "DKI Jakarta", "c": "Hotel"}, {"k": "M292", "l": "Tomang Tol Plaza Kalimalang", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "S009", "l": "Agung Toyota Teluk Kuantan Lobby", "a": "Riau", "c": "Showroom"}, {"k": "J013", "l": "Masjid Besar Attaqwa Wanasaba", "a": "Nusa Tenggara Barat", "c": "Masjid"}, {"k": "C060", "l": "RSUD Srengat Kabupaten Blitar", "a": "Jawa Timur", "c": "Hospital"}, {"k": "L010", "l": "Klub Bogor Raya", "a": "Jawa Barat", "c": "Sport"}, {"k": "F028", "l": "PLN Rayon Cipayung", "a": "Jawa Barat", "c": "Office Tower/Pelabuhan"}, {"k": "M158B", "l": "Kaza City Mall Surabaya Lt. 3 Titik Baru", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "J013A", "l": "Masjid Besar Attaqwa Wanasaba Area Wanita", "a": "Nusa Tenggara Barat", "c": "Masjid"}, {"k": "S009A", "l": "Agung Toyota Teluk Kuantan Ruang Tunggu Servis", "a": "Riau", "c": "Showroom"}, {"k": "M190B", "l": "Lippo Plaza Lubuklinggau Lantai GF ", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M107C", "l": "Singkawang Grand Mall Lantai 2 Baru", "a": "Kalimantan Barat", "c": "Shopping Mall"}, {"k": "M046", "l": "Lippo Plaza Sunset", "a": "Bali", "c": "Shopping Mall"}, {"k": "C047", "l": "RS Murni Teguh Horas Insani", "a": "Sumatera Utara", "c": "Hospital"}, {"k": "T005", "l": "Platinum Cineplex Sidoarjo", "a": "Jawa Timur", "c": "Bioskop"}, {"k": "D008", "l": "Bandara Sultan Thaha Saifuddin", "a": "Jambi", "c": "Airport"}, {"k": "M293", "l": "Thee Matic Mall Majalaya", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M086B", "l": "Plaza Malioboro Yogya Lantai 3 (Dalam Unit)", "a": "DI Yogyakarta", "c": "Shopping Mall"}, {"k": "G045", "l": "Biyasa Cafe & Billiard", "a": "Jambi", "c": "Restaurant/Cafe"}, {"k": "M161A", "l": "Central Plaza Lampung Lt.G", "a": "Lampung", "c": "Shopping Mall"}, {"k": "M118A", "l": "E Walk Balikpapan LG Timur", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "A076", "l": "Pictniq Jogya", "a": "DI Yogyakarta", "c": "Tourist Attactions"}, {"k": "G046", "l": "Ninja Billiard Cibinong", "a": "Jawa Barat", "c": "Restaurant/Cafe"}, {"k": "H091", "l": "Kebunsu Bogor ", "a": "Jawa Barat", "c": "Hotel"}, {"k": "M295", "l": "Citywalk Lippo Cikarang", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "M296", "l": "Lippo Mall Cikarang", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "A009A", "l": "Heha Sky View Yogyakarta Lobby Tiket", "a": "DI Yogyakarta", "c": "Tourist Attactions"}, {"k": "M127B", "l": "Tangcity Superblock Lantai 2", "a": "Banten", "c": "Shopping Mall"}, {"k": "L011", "l": "Aryaduta Country Club", "a": "Banten", "c": "Sport"}, {"k": "M078A", "l": "Beachwalk Shopping Center Bali Lantai 3", "a": "Bali", "c": "Shopping Mall"}, {"k": "C068", "l": "Rs Dadi Purwokerto Poli Klinik", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "C068A", "l": "Rs Dadi Purwokerto  Pintu Masuk CS", "a": "Jawa Tengah", "c": "Hospital"}, {"k": "G044", "l": "The Hallway Space", "a": "Jawa Barat", "c": "Super Market"}, {"k": "F027", "l": "Gama Tower - Foodcourt ", "a": "DKI Jakarta", "c": "Office Tower/Pelabuhan"}, {"k": "H088", "l": "Chevilly Resort And Camp", "a": "Jawa Barat", "c": "Hotel"}, {"k": "H093", "l": "D'Kaliurang Resort & Convention", "a": "Jawa Tengah", "c": "Tourist Attactions"}, {"k": "F029", "l": "PT Pelabuhan Indonesia (Persero) Regional 3 -  Ruang Tunggu Barat", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "F029A", "l": "PT Pelabuhan Indonesia (Persero) Regional 3 -  Ruang Tunggu Tegah", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "F029B", "l": "PT Pelabuhan Indonesia (Persero) Regional 3 - Ruang Tunggu Timur  ", "a": "Jawa Timur", "c": "Office Tower/Pelabuhan"}, {"k": "T008", "l": "Platinum Cineplex Eastvara BSD", "a": "Banten", "c": "Bioskop"}, {"k": "C039B", "l": "RS Bhayangkara Kediri Lt.4", "a": "Jawa Timur", "c": "Hospital"}, {"k": "M294", "l": "Palembang Icon Mall - Lantai UG ", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M294A", "l": "Palembang Icon Mall - Lantai 1", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "M294B", "l": "Palembang Icon Mall - Lantai 3", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "F031", "l": "PT PLN (Persero) Unit Induk Distribusi Bali", "a": "Bali", "c": "Office Tower/Pelabuhan"}, {"k": "M299", "l": "Hive Harapan Indah", "a": "Jawa Barat", "c": "Shopping Mall"}, {"k": "F030", "l": "Pelabuhan Fery Sekupang", "a": "Kepulauan Riau", "c": "Office Tower/Pelabuhan"}, {"k": "R007", "l": "Rest Area KM 43 Merak", "a": "Banten", "c": "Rest Area"}, {"k": "M228A", "l": "Citimall Lahat LG Baru", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "E001", "l": "KM Dharma Kartika II", "a": "Jawa Timur", "c": "Other"}, {"k": "E002", "l": "KM Dharma Ferry V", "a": "Jawa Timur", "c": "Other"}, {"k": "M117B", "l": "Pentacity Shopping Venue Balikpapan Island SF", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "M298 ", "l": "Lippo Plaza Jember Lt LG Hypermart", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M298A", "l": "Lippo Plaza Jember Lt 2F Depan Informa", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M298B", "l": "Lippo Plaza Jember Lt 2F Depan Foodcourt", "a": "Jawa Timur", "c": "Shopping Mall"}, {"k": "M280B", "l": "Ramayana Pontianak (EXH-004A)", "a": "Kalimantan Barat", "c": "Shopping Mall"}, {"k": "M300", "l": "Panbil Mall - Lantai 2 Dekat XXI", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "H092", "l": "Bobopod Alun Alun Malang", "a": "Jawa Timur", "c": "Hotel"}, {"k": "H089", "l": "Eagle Hotel Wonosobo By Azana Collection", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "G047", "l": "Point Coffee Gedhe Kelapa Gading", "a": "DKI Jakarta", "c": "Restaurant/Cafe"}, {"k": "L012", "l": "Supergym Lubuk Linggau 2 Watervang", "a": "Sumatera Selatan", "c": "Sport"}, {"k": "L013", "l": "Supergym Lubuk Linggau Senalang", "a": "Sumatera Selatan", "c": "Sport"}, {"k": "M301 ", "l": "Mall Top 100 Tembesi", "a": "Kepulauan Riau", "c": "Shopping Mall"}, {"k": "P083", "l": "Aneka Jaya Bandungrejo ", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "P082", "l": "Aneka Jaya Sambiroto", "a": "Jawa Tengah", "c": "Super Market"}, {"k": "D027", "l": "Bandara Internasional Raja Haji Fi Sabilillah - Boarding Gate", "a": "Kepulauan Riau", "c": "Airport"}, {"k": "H090", "l": "Front One Hotel Purwodadi", "a": "Jawa Tengah", "c": "Hotel"}, {"k": "H094", "l": "Skandinavia Tangcity", "a": "Banten", "c": "Hotel"}, {"k": "H096", "l": "Prime Park Hotel & Convention Pekanbaru", "a": "Riau", "c": "Hotel"}, {"k": "M197A", "l": "Ramayana Samarinda Square L1-K040", "a": "Kalimantan Timur", "c": "Shopping Mall"}, {"k": "G048", "l": "Ninja Billiard Bintaro", "a": "Banten", "c": "Restaurant/Cafe"}, {"k": "E003", "l": "KM Dharma Rucitra I", "a": "Jawa Timur", "c": "Other"}, {"k": "M302", "l": "Metro Plaza Pekanbaru", "a": "Riau", "c": "Shopping Mall"}, {"k": "B008", "l": "Terminal Tipe A Mendolo Wonosobo", "a": "Jawa Tengah", "c": "Bus Station"}, {"k": "P084", "l": "Palapa Toserba - Krian", "a": "Jawa Timur", "c": "Super Market"}, {"k": "M036B", "l": "Plaza Bintaro Jaya Banten CT.03/07", "a": "Banten", "c": "Shopping Mall"}, {"k": "M040B", "l": "OPI Mall Palembang LG Basement", "a": "Sumatera Selatan", "c": "Shopping Mall"}, {"k": "J014", "l": "Masjid Hudarahman Pontianak", "a": "Kalimantan Barat", "c": "Masjid"}, {"k": "M297", "l": "Senayan Park Mezzanin", "a": "DKI Jakarta", "c": "Shopping Mall"}, {"k": "G049", "l": "Point Coffee Gedhe Rest Area 207A", "a": "Jawa Barat", "c": "Super Market"}, {"k": "H095", "l": "The Allure Villas Pangandaran Managed By Sahid", "a": "Jawa Barat", "c": "Hotel"}, {"k": "T009", "l": "Platinum Cineplex - Trio Mall Kebumen", "a": "Jawa Tengah", "c": "Bioskop"}, {"k": "M304", "l": "Ramayana Panam Square", "a": "Riau", "c": "Shopping Mall"}, {"k": "H098", "l": "Hotel Edotel Nilam Sari", "a": "Riau", "c": "Hotel"}];
+
+const CHECKLIST_ITEMS = [
+  "PIC wajib menggunakan seragam & ID Card",
+  "Melakukan pembersihan levelling / karpet rumput",
+  "Melakukan pembersihan media informasi dan partisi di lokasi",
+  "Melakukan pembersihan seluruh bagian kursi, dan cek stiker nomor kursi",
+  "Melakukan pengecekan kondisi kursi siap beroperasi dengan baik",
+  "Melakukan pengecekan stiker QC, dan gembok kursi",
+  "Melakukan pembersihan area sekitar outlet",
+  "Melakukan pembersihan display grade B"
+];
+
+const checklistEl = document.getElementById('checklist');
+CHECKLIST_ITEMS.forEach((item) => {
+  const label = document.createElement('label');
+  label.className = 'check-row';
+  label.innerHTML = `<input type="checkbox" name="tugas" value="${item.replace(/"/g,'&quot;')}"><span>${item}</span>`;
+  checklistEl.appendChild(label);
+});
+
+document.getElementById('tanggal').valueAsDate = new Date();
+
+/* ---- Outlet search combobox ---- */
+const lokasiInput = document.getElementById('lokasiSearch');
+const lokasiDrop = document.getElementById('lokasiDrop');
+const lokasiTag = document.getElementById('lokasiTag');
+const lokasiTagText = document.getElementById('lokasiTagText');
+let selectedOutlet = null;
+
+function renderOutletOptions(query){
+  const q = query.trim().toLowerCase();
+  if (q.length < 2){
+    lokasiDrop.classList.remove('open');
+    lokasiDrop.innerHTML = '';
+    return;
+  }
+  const matches = OUTLETS.filter(o =>
+    o.l.toLowerCase().includes(q) || o.a.toLowerCase().includes(q) || o.k.toLowerCase().includes(q)
+  ).slice(0, 30);
+
+  lokasiDrop.innerHTML = '';
+  if (matches.length === 0){
+    lokasiDrop.innerHTML = '<div class="combo-empty">Outlet tidak ditemukan. Coba kata kunci lain.</div>';
+  } else {
+    matches.forEach(o => {
+      const item = document.createElement('div');
+      item.className = 'combo-item';
+      item.innerHTML = `<div class="oname">${escapeHtml(o.l)}</div><div class="ometa">${escapeHtml(o.a)} · ${escapeHtml(o.c)}</div>`;
+      item.addEventListener('click', () => selectOutlet(o));
+      lokasiDrop.appendChild(item);
+    });
+  }
+  lokasiDrop.classList.add('open');
+}
+
+function selectOutlet(o){
+  selectedOutlet = o;
+  lokasiInput.value = o.l;
+  lokasiInput.classList.add('valid');
+  lokasiTagText.textContent = o.a + ' · ' + o.c;
+  lokasiTag.classList.add('show');
+  lokasiDrop.classList.remove('open');
+  document.getElementById('err-lokasi').classList.remove('show');
+}
+
+lokasiInput.addEventListener('input', () => {
+  selectedOutlet = null;
+  lokasiInput.classList.remove('valid');
+  lokasiTag.classList.remove('show');
+  renderOutletOptions(lokasiInput.value);
+});
+lokasiInput.addEventListener('focus', () => { if (lokasiInput.value) renderOutletOptions(lokasiInput.value); });
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.combo')) lokasiDrop.classList.remove('open');
+});
+
+/* ---- Photo capture ---- */
+const photoData = {};
+const PHOTO_KEYS = ['depan','samping','belakang','money','timer'];
+
+function compressImage(file, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > height && width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
+      else if (height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function bindPhotoInput(input){
+  input.addEventListener('change', async (e) => {
+    const key = input.dataset.key;
+    const file = e.target.files[0];
+    if (!file) return;
+    const slot = input.closest('.photo-slot');
+    slot.querySelector('.cam-label').textContent = 'Memproses...';
+    try {
+      const dataUrl = await compressImage(file, 1000, 0.7);
+      photoData[key] = dataUrl;
+      slot.classList.add('filled');
+      slot.innerHTML = `<img src="${dataUrl}" alt="${key}"><span class="badge-ok">✓</span>`;
+      const newInput = document.createElement('input');
+      newInput.type = 'file'; newInput.accept = 'image/*'; newInput.capture = 'environment'; newInput.dataset.key = key;
+      slot.appendChild(newInput);
+      bindPhotoInput(newInput);
+      document.getElementById('err-photo').classList.remove('show');
+      showToast('Foto tersimpan');
+    } catch(err){
+      slot.querySelector('.cam-label').textContent = 'Gagal memproses foto, coba lagi';
+      console.error(err);
+    }
+  });
+}
+document.querySelectorAll('.photo-slot input[type=file]').forEach(bindPhotoInput);
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+document.getElementById('reportForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  let ok = true;
+
+  document.getElementById('err-lokasi').classList.toggle('show', !selectedOutlet);
+  if (!selectedOutlet) ok = false;
+
+  const tugas = Array.from(document.querySelectorAll('input[name=tugas]:checked')).map(c => c.value);
+  document.getElementById('err-checklist').classList.toggle('show', tugas.length === 0);
+  if (tugas.length === 0) ok = false;
+
+  const progresInput = document.querySelector('input[name=progres]:checked');
+  document.getElementById('err-progres').classList.toggle('show', !progresInput);
+  if (!progresInput) ok = false;
+
+  const missingPhoto = PHOTO_KEYS.some(k => !photoData[k]);
+  document.getElementById('err-photo').classList.toggle('show', missingPhoto);
+  if (missingPhoto) ok = false;
+
+  const nama = document.getElementById('nama').value.trim();
+  const tanggal = document.getElementById('tanggal').value;
+  const kendala = document.getElementById('kendala').value.trim();
+  const solusi = document.getElementById('solusi').value.trim();
+
+  if (!nama || !tanggal || !kendala || !solusi) ok = false;
+
+  if (!ok){
+    document.querySelector('.error-line.show')?.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Mengirim...';
+
+  const report = {
+    nama,
+    lokasi: selectedOutlet.l,
+    lokasiKode: selectedOutlet.k,
+    lokasiArea: selectedOutlet.a,
+    tanggal,
+    tugas,
+    kendala, solusi,
+    progres: progresInput.value,
+    foto: {
+      depan: photoData.depan, samping: photoData.samping, belakang: photoData.belakang,
+      money: photoData.money, timer: photoData.timer
+    },
+    submittedAt: new Date().toISOString()
+  };
+
+  const key = 'laporan:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+
+  try {
+    const result = await window.storage.set(key, JSON.stringify(report), true);
+    if (!result) throw new Error('Storage returned null');
+    document.getElementById('reportForm').style.display = 'none';
+    document.getElementById('doneScreen').style.display = 'block';
+    document.querySelector('.submit-bar').style.display = 'none';
+    loadHistory();
+  } catch(err){
+    console.error(err);
+    alert('Gagal menyimpan laporan. Periksa koneksi internet dan coba lagi.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Kirim Laporan';
+  }
+});
+
+document.getElementById('btnNewReport').addEventListener('click', () => location.reload());
+
+/* ---- History ---- */
+const historyToggle = document.getElementById('historyToggle');
+const historyList = document.getElementById('historyList');
+let historyLoaded = false;
+
+historyToggle.addEventListener('click', () => {
+  historyToggle.classList.toggle('open');
+  historyList.classList.toggle('open');
+  if (historyList.classList.contains('open') && !historyLoaded) loadHistory();
+});
+
+async function loadHistory(){
+  historyList.innerHTML = '<div class="hist-empty">Memuat riwayat…</div>';
+  try {
+    const listResult = await window.storage.list('laporan:', true);
+    const keys = (listResult && listResult.keys) ? listResult.keys : [];
+    if (keys.length === 0){
+      historyList.innerHTML = '<div class="hist-empty">Belum ada laporan yang masuk.</div>';
+      historyLoaded = true;
+      return;
+    }
+    const items = [];
+    for (const k of keys){
+      try {
+        const r = await window.storage.get(k, true);
+        if (r && r.value) items.push({ key: k, data: JSON.parse(r.value) });
+      } catch(e){}
+    }
+    items.sort((a,b) => new Date(b.data.submittedAt) - new Date(a.data.submittedAt));
+
+    historyList.innerHTML = '';
+    items.forEach(({data}) => {
+      const row = document.createElement('div');
+      row.className = 'hist-item';
+      const waktu = new Date(data.submittedAt).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
+      const pillClass = data.progres === 'Masalah Selesai' ? 'selesai' : 'tindak';
+      const fotoKeys = ['depan','samping','belakang','money','timer'];
+      row.innerHTML = `
+        <div class="row1"><span>${escapeHtml(data.nama)}</span><span>${waktu}</span></div>
+        <div class="row2">${escapeHtml(data.lokasi)}</div>
+        <span class="pill ${pillClass}">${escapeHtml(data.progres)}</span>
+        <div class="hist-detail">
+          <div class="krow"><b>Kegiatan dilakukan</b>${data.tugas.map(escapeHtml).join(', ')}</div>
+          <div class="krow"><b>Kendala</b>${escapeHtml(data.kendala)}</div>
+          <div class="krow"><b>Solusi</b>${escapeHtml(data.solusi)}</div>
+          <div class="photo-mini-grid">
+            ${fotoKeys.map(k => data.foto && data.foto[k] ? `<img src="${data.foto[k]}">` : '').join('')}
+          </div>
+        </div>
+      `;
+      row.addEventListener('click', () => row.querySelector('.hist-detail').classList.toggle('open'));
+      historyList.appendChild(row);
+    });
+    historyLoaded = true;
+  } catch(err){
+    console.error(err);
+    historyList.innerHTML = '<div class="hist-empty">Gagal memuat riwayat. Coba muat ulang halaman.</div>';
+  }
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+</script>
+
+</body>
+</html>
