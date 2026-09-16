@@ -60,7 +60,6 @@
     padding:11px 12px;font-size:1rem;font-family:inherit;color:var(--ink);background:#FBFAF7;
   }
   input:focus, textarea:focus, select:focus{outline:2px solid var(--amber);outline-offset:1px;background:#fff;}
-  input:disabled{background:#EFEDE5;color:var(--ink-soft);cursor:not-allowed;}
   textarea{resize:vertical;min-height:76px;}
 
   /* Outlet search combobox */
@@ -227,19 +226,9 @@
       </label>
 
       <label class="field">
-        <span class="lbl">Area Kerja <span class="req">*</span></span>
-      </label>
-      <div class="radio-group" id="areaGroup">
-        <label class="radio-row"><input type="radio" name="areaKerja" value="Area 1"><span>Area 1</span></label>
-        <label class="radio-row"><input type="radio" name="areaKerja" value="Area 2"><span>Area 2</span></label>
-        <label class="radio-row"><input type="radio" name="areaKerja" value="Area 3"><span>Area 3</span></label>
-      </div>
-      <div class="error-line" id="err-area">Pilih area kerja terlebih dahulu.</div>
-
-      <label class="field">
         <span class="lbl">Lokasi Outlet <span class="req">*</span></span>
         <div class="combo">
-          <input type="text" id="lokasiSearch" placeholder="Pilih area kerja terlebih dahulu..." autocomplete="off" required>
+          <input type="text" id="lokasiSearch" placeholder="Ketik nama outlet untuk mencari..." autocomplete="off" required>
           <div class="combo-drop" id="lokasiDrop"></div>
           <div class="combo-selected-tag" id="lokasiTag">✓ <span id="lokasiTagText"></span></div>
         </div>
@@ -329,20 +318,10 @@
           <input type="text" id="namaKompetitor" placeholder="Contoh: Rileks Massage Chair">
           <div class="error-line" id="err-namaKompetitor">Isi nama kompetitornya.</div>
         </label>
-        <label class="field">
-          <span class="lbl">Jumlah Kursi Kompetitor <span class="req">*</span></span>
-          <input type="text" inputmode="numeric" id="jumlahKursiKompetitor" placeholder="Contoh: 3">
-          <div class="error-line" id="err-jumlahKursiKompetitor">Isi jumlah kursi kompetitor (angka).</div>
-        </label>
-        <label class="field">
-          <span class="lbl">Titik Kompetitor <span class="req">*</span></span>
-          <input type="text" id="titikKompetitor" placeholder="Contoh: Depan pintu masuk utama">
-          <div class="error-line" id="err-titikKompetitor">Isi titik/lokasi kompetitor.</div>
-        </label>
         <div class="photo-grid" id="kompetitorPhotoWrap" style="margin-top:12px;">
           <div class="photo-slot" data-key="kompetitor">
-            <span class="cam-icon">📷</span><span class="cam-label">Foto kompetitor (kamera / galeri)</span>
-            <input type="file" accept="image/*" data-key="kompetitor">
+            <span class="cam-icon">📷</span><span class="cam-label">Foto kompetitor</span>
+            <input type="file" accept="image/*" capture="environment" data-key="kompetitor">
           </div>
         </div>
         <div class="error-line" id="err-fotoKompetitor">Lampirkan foto kompetitor.</div>
@@ -467,7 +446,8 @@ const ADMIN_PASSWORD = "lapangan2026";
    GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
    (lihat file Code.gs untuk cara membuatnya)
 ========================================================= */
-const API_URL = "GANTI_DENGAN_URL_WEB_APP_ANDA";
+const API_URL = "https://script.google.com/macros/s/AKfycbyLslYZKV3apSCWqIvIrhJ_vDH1cc5irM4Yd7ezMb2tS42AX_EtAcTsUYZRJcSz0WKR/exec";
+
 const OUTLETS = [
   {"k": "A001", "l": "Ancol Dufan Ice Age Indoor Playgound", "a": "DKI Jakarta", "c": "Tourist Attactions"},
   {"k": "A001A", "l": "Ancol Dufan Kawasan Hikayat", "a": "DKI Jakarta", "c": "Tourist Attactions"},
@@ -1379,7 +1359,7 @@ const OUTLETS = [
   {"k": "T009", "l": "Platinum Cineplex - Trio Mall Kebumen", "a": "Jawa Tengah", "c": "Bioskop"},
   {"k": "U001", "l": "Binus Square Hall", "a": "DKI Jakarta", "c": "University"},
   {"k": "U004", "l": "Ma'Had Aisyah Binti Abu Bakar Li Al-Dakwah", "a": "Jawa Barat", "c": "University"}
-];
+
 ];
 const STAFF_LIST = [
   {"n": "PR341", "m": "Abdul Deva Muhammad Ek", "p": "Staff Operasional"},
@@ -1598,11 +1578,12 @@ const STAFF_LIST = [
   {"n": "PR331", "m": "Zulfikar Awalludin Syah", "p": "Mutasi SO"},
   {"n": "PR322", "m": "Zulfikar Azizi", "p": "Staff Operasional"}
 ];
+
 const AREA_OUTLETS = {
-  "Area 1": [],
-  "Area 2": [],
-  "Area 3": []
-};
+  "Area Monitoring 1": [],
+  "Area Monitoring 2": [],
+  "Area Monitoring 3": []
+];    
 
 /* ================= SHARED HELPERS ================= */
 function escapeHtml(str){
@@ -1723,47 +1704,14 @@ const lokasiDrop = document.getElementById('lokasiDrop');
 const lokasiTag = document.getElementById('lokasiTag');
 const lokasiTagText = document.getElementById('lokasiTagText');
 let selectedOutlet = null;
-let selectedArea = null;
-lokasiInput.disabled = true;
-lokasiInput.placeholder = 'Pilih area kerja terlebih dahulu...';
-
-function getAllowedOutletCodes(){
-  if (!selectedArea) return null; // null = tidak dibatasi (semua boleh)
-  const codes = AREA_OUTLETS[selectedArea];
-  if (!codes || codes.length === 0) return null; // daftar kosong = tidak dibatasi
-  return codes;
-}
-
-/* Pilih Area Kerja */
-document.querySelectorAll('input[name=areaKerja]').forEach(r => {
-  r.addEventListener('change', () => {
-    selectedArea = r.value;
-    document.getElementById('err-area').classList.remove('show');
-
-    // Reset outlet yang sudah dipilih (karena area berubah)
-    selectedOutlet = null;
-    lokasiInput.value = '';
-    lokasiInput.classList.remove('valid');
-    lokasiTag.classList.remove('show');
-    lokasiInput.disabled = false;
-    lokasiInput.placeholder = 'Ketik nama outlet untuk mencari...';
-    lokasiDrop.classList.remove('open');
-  });
-});
 
 function renderOutletOptions(query){
   const q = query.trim().toLowerCase();
   if (q.length < 2){ lokasiDrop.classList.remove('open'); lokasiDrop.innerHTML=''; return; }
-  const allowedCodes = getAllowedOutletCodes();
-  let pool = OUTLETS;
-  if (allowedCodes !== null){
-    const allowedSet = new Set(allowedCodes);
-    pool = OUTLETS.filter(o => allowedSet.has(o.k));
-  }
-  const matches = pool.filter(o => o.l.toLowerCase().includes(q) || o.a.toLowerCase().includes(q) || o.k.toLowerCase().includes(q)).slice(0, 30);
+  const matches = OUTLETS.filter(o => o.l.toLowerCase().includes(q) || o.a.toLowerCase().includes(q) || o.k.toLowerCase().includes(q)).slice(0, 30);
   lokasiDrop.innerHTML = '';
   if (matches.length === 0){
-    lokasiDrop.innerHTML = `<div class="combo-empty">${allowedCodes !== null && allowedCodes.length === 0 ? 'Belum ada outlet yang diatur untuk area kamu. Hubungi admin.' : 'Outlet tidak ditemukan. Coba kata kunci lain.'}</div>`;
+    lokasiDrop.innerHTML = '<div class="combo-empty">Outlet tidak ditemukan. Coba kata kunci lain.</div>';
   } else {
     matches.forEach(o => {
       const item = document.createElement('div');
@@ -1896,8 +1844,6 @@ document.querySelectorAll('input[name=kompetitor]').forEach(r => {
       kompetitorDetailWrap.style.display = 'none';
       document.getElementById('err-fotoKompetitor').classList.remove('show');
       document.getElementById('err-namaKompetitor').classList.remove('show');
-      document.getElementById('err-jumlahKursiKompetitor').classList.remove('show');
-      document.getElementById('err-titikKompetitor').classList.remove('show');
     }
   });
 });
@@ -1941,23 +1887,11 @@ document.getElementById('reportForm').addEventListener('submit', async (e) => {
   document.getElementById('err-namaKompetitor').classList.toggle('show', adaKompetitor && !namaKompetitorVal);
   if (adaKompetitor && !namaKompetitorVal) ok = false;
 
-  const jumlahKursiKompetitorRaw = document.getElementById('jumlahKursiKompetitor').value.trim();
-  const jumlahKursiKompetitorVal = jumlahKursiKompetitorRaw.replace(/[^0-9]/g, '');
-  document.getElementById('err-jumlahKursiKompetitor').classList.toggle('show', adaKompetitor && !jumlahKursiKompetitorVal);
-  if (adaKompetitor && !jumlahKursiKompetitorVal) ok = false;
-
-  const titikKompetitorVal = document.getElementById('titikKompetitor').value.trim();
-  document.getElementById('err-titikKompetitor').classList.toggle('show', adaKompetitor && !titikKompetitorVal);
-  if (adaKompetitor && !titikKompetitorVal) ok = false;
-
   document.getElementById('err-fotoKompetitor').classList.toggle('show', adaKompetitor && !photoData.kompetitor);
   if (adaKompetitor && !photoData.kompetitor) ok = false;
 
   document.getElementById('err-nama').classList.toggle('show', !selectedStaffMember);
   if (!selectedStaffMember) ok = false;
-
-  document.getElementById('err-area').classList.toggle('show', !selectedArea);
-  if (!selectedArea) ok = false;
 
   const tanggal = document.getElementById('tanggal').value;
   const kendala = document.getElementById('kendala').value.trim();
@@ -1977,7 +1911,6 @@ document.getElementById('reportForm').addEventListener('submit', async (e) => {
     nama: selectedStaffMember.m,
     nik: selectedStaffMember.n,
     posisi: selectedStaffMember.p,
-    areaKerja: selectedArea,
     lokasi: selectedOutlet.l,
     lokasiKode: selectedOutlet.k,
     lokasiArea: selectedOutlet.a,
@@ -1989,8 +1922,6 @@ document.getElementById('reportForm').addEventListener('submit', async (e) => {
     omzetHarian: Number(omzetNumeric),
     kompetitor: kompetitorInput.value,
     namaKompetitor: adaKompetitor ? namaKompetitorVal : null,
-    jumlahKursiKompetitor: adaKompetitor ? Number(jumlahKursiKompetitorVal) : null,
-    titikKompetitor: adaKompetitor ? titikKompetitorVal : null,
     fotoKompetitor: adaKompetitor ? photoData.kompetitor : null,
     foto: { depan: photoData.depan, samping: photoData.samping, belakang: photoData.belakang },
     submittedAt: new Date().toISOString()
@@ -2041,8 +1972,8 @@ async function loadHistory(){
       const pillClass = data.progres === 'Masalah Selesai' ? 'selesai' : 'tindak';
       const fotoKeys = ['depan','samping','belakang'];
       row.innerHTML = `
-          <div class="row1"><span>${escapeHtml(data.nama)}</span><span>${waktu}</span></div>
-          <div class="row2">${escapeHtml(data.lokasi)} · NIK ${escapeHtml(data.nik || '-')} · ${escapeHtml(data.areaKerja || '-')}</div>
+        <div class="row1"><span>${escapeHtml(data.nama)}</span><span>${waktu}</span></div>
+        <div class="row2">${escapeHtml(data.lokasi)} · NIK ${escapeHtml(data.nik || '-')}</div>
         <span class="pill ${pillClass}">${escapeHtml(data.progres)}</span>
         <div class="hist-detail">
           <div class="krow"><b>Kegiatan dilakukan</b>${data.tugas.map(escapeHtml).join(', ')}</div>
@@ -2050,7 +1981,7 @@ async function loadHistory(){
           <div class="krow"><b>Solusi</b>${escapeHtml(data.solusi)}</div>
           ${data.tanggalRequest ? `<div class="krow"><b>Tanggal Request</b>${formatTgl(data.tanggalRequest)}</div>` : ''}
           <div class="krow"><b>Omzet Harian</b>${formatRupiah(data.omzetHarian)}</div>
-          <div class="krow"><b>Kompetitor</b>${escapeHtml(data.kompetitor || '-')}${data.namaKompetitor ? ' — ' + escapeHtml(data.namaKompetitor) : ''}${data.jumlahKursiKompetitor ? ' · ' + data.jumlahKursiKompetitor + ' kursi' : ''}${data.titikKompetitor ? ' · ' + escapeHtml(data.titikKompetitor) : ''}</div>
+          <div class="krow"><b>Kompetitor</b>${escapeHtml(data.kompetitor || '-')}${data.namaKompetitor ? ' — ' + escapeHtml(data.namaKompetitor) : ''}</div>
           <div class="photo-mini-grid">
             ${fotoKeys.map(k => data.foto && data.foto[k] ? `<img src="${data.foto[k]}">` : '').join('')}
             ${data.fotoKompetitor ? `<img src="${data.fotoKompetitor}">` : ''}
@@ -2146,7 +2077,7 @@ function renderTable(){
     const pillClass = r.progres === 'Masalah Selesai' ? 'selesai' : 'tindak';
     const kendalaShort = r.kendala.length > 40 ? r.kendala.slice(0,40) + '…' : r.kendala;
     tr.innerHTML = `
-      <td>${escapeHtml(r.nama)}<br><span class="os-meta">NIK ${escapeHtml(r.nik||'-')} · ${escapeHtml(r.areaKerja||'-')}</span></td>
+      <td>${escapeHtml(r.nama)}<br><span class="os-meta">NIK ${escapeHtml(r.nik||'-')}</span></td>
       <td>${escapeHtml(r.lokasi)}<br><span class="os-meta">${escapeHtml(r.lokasiArea||'')}</span></td>
       <td>${formatTgl(r.tanggal)}</td>
       <td>${escapeHtml(kendalaShort)}</td>
@@ -2180,7 +2111,7 @@ function buildDetailHtml(r){
       <div class="krow"><b>Solusi</b>${escapeHtml(r.solusi)}</div>
       ${r.tanggalRequest ? `<div class="krow"><b>Tanggal Request</b>${formatTgl(r.tanggalRequest)} (${daysWaiting(r.tanggalRequest)} hari menunggu)</div>` : ''}
       <div class="krow"><b>Omzet Harian</b>${formatRupiah(r.omzetHarian)}</div>
-      <div class="krow"><b>Kompetitor</b>${escapeHtml(r.kompetitor || '-')}${r.namaKompetitor ? ' — ' + escapeHtml(r.namaKompetitor) : ''}${r.jumlahKursiKompetitor ? ' · ' + r.jumlahKursiKompetitor + ' kursi' : ''}${r.titikKompetitor ? ' · ' + escapeHtml(r.titikKompetitor) : ''}</div>
+      <div class="krow"><b>Kompetitor</b>${escapeHtml(r.kompetitor || '-')}${r.namaKompetitor ? ' — ' + escapeHtml(r.namaKompetitor) : ''}</div>
       <div class="photo-mini-grid">
         ${fotoKeys.map(([k,label]) => r.foto && r.foto[k] ? `<div><img src="${r.foto[k]}"><div class="cap">${label}</div></div>` : '').join('')}
         ${r.fotoKompetitor ? `<div><img src="${r.fotoKompetitor}"><div class="cap">Kompetitor</div></div>` : ''}
@@ -2257,7 +2188,6 @@ document.getElementById('btnExportExcel').addEventListener('click', () => {
     'Nama Staff': r.nama,
     'NIK': r.nik || '',
     'Posisi': r.posisi || '',
-    'Area Kerja': r.areaKerja || '',
     'Outlet': r.lokasi,
     'Kode Outlet': r.lokasiKode,
     'Area': r.lokasiArea,
@@ -2271,14 +2201,12 @@ document.getElementById('btnExportExcel').addEventListener('click', () => {
     'Omzet Harian (Rp)': r.omzetHarian || 0,
     'Ada Kompetitor': r.kompetitor,
     'Nama Kompetitor': r.namaKompetitor || '',
-    'Jumlah Kursi Kompetitor': r.jumlahKursiKompetitor || '',
-    'Titik Kompetitor': r.titikKompetitor || '',
     'Waktu Dikirim': new Date(r.submittedAt).toLocaleString('id-ID')
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   ws['!cols'] = [
-    {wch:18},{wch:10},{wch:18},{wch:10},{wch:28},{wch:10},{wch:16},{wch:12},{wch:40},{wch:30},{wch:30},
-    {wch:22},{wch:14},{wch:12},{wch:16},{wch:12},{wch:22},{wch:16},{wch:22},{wch:18}
+    {wch:18},{wch:10},{wch:18},{wch:28},{wch:10},{wch:16},{wch:12},{wch:40},{wch:30},{wch:30},
+    {wch:22},{wch:14},{wch:12},{wch:16},{wch:12},{wch:22},{wch:18}
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Laporan');
