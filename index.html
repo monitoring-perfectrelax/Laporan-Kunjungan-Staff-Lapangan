@@ -467,8 +467,7 @@ const ADMIN_PASSWORD = "lapangan2026";
    GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
    (lihat file Code.gs untuk cara membuatnya)
 ========================================================= */
-const API_URL = "const API_URL = "https://script.google.com/macros/s/AKfycbyLslYZKV3apSCWqIvIrhJ_vDH1cc5irM4Yd7ezMb2tS42AX_EtAcTsUYZRJcSz0WKR/exec";
-
+const API_URL = "GANTI_DENGAN_URL_WEB_APP_ANDA";
 const OUTLETS = [
   {"k": "A001", "l": "Ancol Dufan Ice Age Indoor Playgound", "a": "DKI Jakarta", "c": "Tourist Attactions"},
   {"k": "A001A", "l": "Ancol Dufan Kawasan Hikayat", "a": "DKI Jakarta", "c": "Tourist Attactions"},
@@ -1381,6 +1380,7 @@ const OUTLETS = [
   {"k": "U001", "l": "Binus Square Hall", "a": "DKI Jakarta", "c": "University"},
   {"k": "U004", "l": "Ma'Had Aisyah Binti Abu Bakar Li Al-Dakwah", "a": "Jawa Barat", "c": "University"}
 ];
+];
 const STAFF_LIST = [
   {"n": "PR341", "m": "Abdul Deva Muhammad Ek", "p": "Staff Operasional"},
   {"n": "PR043", "m": "Abdul Muhdi", "p": "SPV Area"},
@@ -1598,7 +1598,11 @@ const STAFF_LIST = [
   {"n": "PR331", "m": "Zulfikar Awalludin Syah", "p": "Mutasi SO"},
   {"n": "PR322", "m": "Zulfikar Azizi", "p": "Staff Operasional"}
 ];
-
+const AREA_OUTLETS = {
+  "Area 1": [],
+  "Area 2": [],
+  "Area 3": []
+};
 
 /* ================= SHARED HELPERS ================= */
 function escapeHtml(str){
