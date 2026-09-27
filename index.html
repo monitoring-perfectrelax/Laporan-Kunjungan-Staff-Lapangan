@@ -246,6 +246,12 @@
         <div class="error-line" id="err-lokasi">Pilih outlet dari daftar pencarian di atas.</div>
       </label>
 
+      <label class="field" id="lokasiSpesifikWrap" style="display:none;">
+        <span class="lbl">Keterangan Lokasi Spesifik <span class="req">*</span></span>
+        <input type="text" id="lokasiSpesifik" placeholder="Contoh: Nama outlet dan alamat lengkapnya">
+        <div class="error-line" id="err-lokasiSpesifik">Isi keterangan lokasi spesifiknya.</div>
+      </label>
+
       <label class="field">
         <span class="lbl">Tanggal <span class="req">*</span></span>
         <input type="date" id="tanggal" required>
@@ -309,7 +315,7 @@
       <p class="hint">Total omzet sejak terakhir kali collection (pengambilan uang) dilakukan.</p>
       <label class="field">
         <span class="lbl">Omzet Harian (dari terakhir collection) <span class="req">*</span></span>
-        <input type="text" inputmode="numeric" id="omzet" required placeholder="Contoh: 150000">
+        <input type="text" inputmode="numeric" id="omzet" required placeholder="Contoh: Rp 150,000">
       </label>
       <div class="error-line" id="err-omzet">Isi jumlah omzet (angka saja).</div>
     </div>
@@ -1379,7 +1385,8 @@ const OUTLETS = [
   {"k": "T008", "l": "Platinum Cineplex Eastvara BSD", "a": "Banten", "c": "Bioskop"},
   {"k": "T009", "l": "Platinum Cineplex - Trio Mall Kebumen", "a": "Jawa Tengah", "c": "Bioskop"},
   {"k": "U001", "l": "Binus Square Hall", "a": "DKI Jakarta", "c": "University"},
-  {"k": "U004", "l": "Ma'Had Aisyah Binti Abu Bakar Li Al-Dakwah", "a": "Jawa Barat", "c": "University"}];
+  {"k": "U004", "l": "Ma'Had Aisyah Binti Abu Bakar Li Al-Dakwah", "a": "Jawa Barat", "c": "University"},
+  {"k": "Unknow", "l": "Lainnya", "a": "Lainnya", "c": "Unknow"}];
 const STAFF_LIST = [
   {"n": "PR341", "m": "Abdul Deva Muhammad Ek", "p": "Staff Operasional"},
   {"n": "PR043", "m": "Abdul Muhdi", "p": "SPV Area"},
@@ -1721,6 +1728,19 @@ CHECKLIST_ITEMS.forEach((item) => {
 });
 document.getElementById('tanggal').valueAsDate = new Date();
 
+/* Format Omzet Harian sebagai Rupiah saat diketik (contoh: Rp 2,000,000) */
+const omzetInput = document.getElementById('omzet');
+omzetInput.addEventListener('input', () => {
+  const digits = omzetInput.value.replace(/[^0-9]/g, '');
+  if (!digits){ omzetInput.value = ''; return; }
+  omzetInput.value = 'Rp ' + Number(digits).toLocaleString('en-US');
+});
+omzetInput.addEventListener('focus', () => {
+  // Pindahkan kursor ke akhir teks supaya nyaman lanjut mengetik
+  const val = omzetInput.value;
+  omzetInput.setSelectionRange(val.length, val.length);
+});
+
 /* Tanggal Request toggle */
 const tanggalRequestWrap = document.getElementById('tanggalRequestWrap');
 const tanggalRequestInput = document.getElementById('tanggalRequest');
@@ -1802,11 +1822,21 @@ function selectOutlet(o){
   lokasiTag.classList.add('show');
   lokasiDrop.classList.remove('open');
   document.getElementById('err-lokasi').classList.remove('show');
+
+  const lokasiSpesifikWrap = document.getElementById('lokasiSpesifikWrap');
+  if (o.k === 'Unknow'){
+    lokasiSpesifikWrap.style.display = 'block';
+  } else {
+    lokasiSpesifikWrap.style.display = 'none';
+    document.getElementById('lokasiSpesifik').value = '';
+    document.getElementById('err-lokasiSpesifik').classList.remove('show');
+  }
 }
 lokasiInput.addEventListener('input', () => {
   selectedOutlet = null;
   lokasiInput.classList.remove('valid');
   lokasiTag.classList.remove('show');
+  document.getElementById('lokasiSpesifikWrap').style.display = 'none';
   renderOutletOptions(lokasiInput.value);
 });
 lokasiInput.addEventListener('focus', () => { if (lokasiInput.value) renderOutletOptions(lokasiInput.value); });
@@ -1929,6 +1959,11 @@ document.getElementById('reportForm').addEventListener('submit', async (e) => {
   document.getElementById('err-lokasi').classList.toggle('show', !selectedOutlet);
   if (!selectedOutlet) ok = false;
 
+  const isLokasiLainnya = selectedOutlet && selectedOutlet.k === 'Unknow';
+  const lokasiSpesifikVal = document.getElementById('lokasiSpesifik').value.trim();
+  document.getElementById('err-lokasiSpesifik').classList.toggle('show', isLokasiLainnya && !lokasiSpesifikVal);
+  if (isLokasiLainnya && !lokasiSpesifikVal) ok = false;
+
   const tugas = Array.from(document.querySelectorAll('input[name=tugas]:checked')).map(c => c.value);
   document.getElementById('err-checklist').classList.toggle('show', tugas.length === 0);
   if (tugas.length === 0) ok = false;
@@ -2000,6 +2035,7 @@ document.getElementById('reportForm').addEventListener('submit', async (e) => {
     lokasi: selectedOutlet.l,
     lokasiKode: selectedOutlet.k,
     lokasiArea: selectedOutlet.a,
+    lokasiSpesifik: isLokasiLainnya ? lokasiSpesifikVal : null,
     tanggal,
     tugas,
     kendala, solusi,
@@ -2061,7 +2097,7 @@ async function loadHistory(){
       const fotoKeys = ['depan','samping','belakang'];
       row.innerHTML = `
           <div class="row1"><span>${escapeHtml(data.nama)}</span><span>${waktu}</span></div>
-          <div class="row2">${escapeHtml(data.lokasi)} · NIK ${escapeHtml(data.nik || '-')} · ${escapeHtml(data.areaKerja || '-')}</div>
+          <div class="row2">${escapeHtml(data.lokasi)}${data.lokasiSpesifik ? ' — ' + escapeHtml(data.lokasiSpesifik) : ''} · NIK ${escapeHtml(data.nik || '-')} · ${escapeHtml(data.areaKerja || '-')}</div>
         <span class="pill ${pillClass}">${escapeHtml(data.progres)}</span>
         <div class="hist-detail">
           <div class="krow"><b>Kegiatan dilakukan</b>${data.tugas.map(escapeHtml).join(', ')}</div>
@@ -2166,7 +2202,7 @@ function renderTable(){
     const kendalaShort = r.kendala.length > 40 ? r.kendala.slice(0,40) + '…' : r.kendala;
     tr.innerHTML = `
       <td>${escapeHtml(r.nama)}<br><span class="os-meta">NIK ${escapeHtml(r.nik||'-')} · ${escapeHtml(r.areaKerja||'-')}</span></td>
-      <td>${escapeHtml(r.lokasi)}<br><span class="os-meta">${escapeHtml(r.lokasiArea||'')}</span></td>
+      <td>${escapeHtml(r.lokasi)}${r.lokasiSpesifik ? '<br><span class="os-meta">' + escapeHtml(r.lokasiSpesifik) + '</span>' : ''}<br><span class="os-meta">${escapeHtml(r.lokasiArea||'')}</span></td>
       <td>${formatTgl(r.tanggal)}</td>
       <td>${escapeHtml(kendalaShort)}</td>
       <td><span class="pill ${pillClass}">${escapeHtml(r.progres)}</span></td>
@@ -2279,6 +2315,7 @@ document.getElementById('btnExportExcel').addEventListener('click', () => {
     'Area Kerja': r.areaKerja || '',
     'Outlet': r.lokasi,
     'Kode Outlet': r.lokasiKode,
+    'Keterangan Lokasi Spesifik': r.lokasiSpesifik || '',
     'Area': r.lokasiArea,
     'Tanggal': r.tanggal,
     'Kegiatan Dilakukan': (r.tugas || []).join('; '),
@@ -2296,7 +2333,7 @@ document.getElementById('btnExportExcel').addEventListener('click', () => {
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   ws['!cols'] = [
-    {wch:18},{wch:10},{wch:18},{wch:10},{wch:28},{wch:10},{wch:16},{wch:12},{wch:40},{wch:30},{wch:30},
+    {wch:18},{wch:10},{wch:18},{wch:10},{wch:28},{wch:10},{wch:28},{wch:16},{wch:12},{wch:40},{wch:30},{wch:30},
     {wch:22},{wch:14},{wch:12},{wch:16},{wch:12},{wch:22},{wch:16},{wch:22},{wch:18}
   ];
   const wb = XLSX.utils.book_new();
